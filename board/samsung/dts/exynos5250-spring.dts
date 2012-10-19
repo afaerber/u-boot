@@ -99,6 +99,10 @@
 		};
 	};
 
+	mshci@12200000 {
+		samsung,pre-init;
+	};
+
 	mshci@12210000 {
 		samsung,sdhci-bus-width = <4>;
 	};
