@@ -25,7 +25,7 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(BOARD).o
 
 ifndef CONFIG_SPL_BUILD
-COBJS	:= smdk5250.o
+COBJS	:= smdk5250.o low_battery.o
 else
 COBJS	:= smdk5250_spl.o
 endif

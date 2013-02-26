@@ -30,4 +30,7 @@ void spi_init(void);
 /* Init the I2C driver */
 void board_i2c_init(const void *blob);
 
+/* Check the power status before starting full steam */
+void low_battery_init(void);
+
 #endif

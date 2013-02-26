@@ -1184,6 +1184,14 @@ int board_late_init(void)
 		 */
 		return -1;
 	}
+
+	/*
+	 * Check the power status before starting full steam
+	 * if the EC supports the feature.
+	 */
+	if (local.ec_passthrough)
+		low_battery_init();
+
 	return 0;
 }
 #endif
