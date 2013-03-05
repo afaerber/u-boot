@@ -39,7 +39,7 @@ static struct spl_machine_param machine_param
 		__attribute__((section(".machine_param"))) = {
 	.signature	= SIGNATURE,
 	.version	= 1,
-	.params		= "vmubfasirMwzc",
+	.params		= "vmubfasirRMwzc",
 	.size		= sizeof(machine_param),
 
 	.mem_iv_size	= 0x1f,
@@ -60,7 +60,7 @@ static struct spl_machine_param machine_param
 	.arm_freq_mhz	= 1700,
 	.serial_base	= 0x12c30000,
 	.i2c_base	= 0x12c60000,
-	.board_rev_gpios = GPIO_D00 | (GPIO_D01 << 16),
+	.board_rev_gpios = { GPIO_D00 | (GPIO_D01 << 16), GPIO_D02 },
 	.mem_manuf	= MEM_MANUF_SAMSUNG,
 	.bad_wake_gpio	= GPIO_Y10,
 	.compress_type	= UBOOT_COMPRESS_NONE,
@@ -81,10 +81,12 @@ struct spl_machine_param *spl_get_machine_params(void)
 int board_get_revision(void)
 {
 	struct spl_machine_param *params = spl_get_machine_params();
-	unsigned gpio[CONFIG_BOARD_REV_GPIO_COUNT];
+	unsigned gpio[4];
 
-	gpio[0] = params->board_rev_gpios & 0xffff;
-	gpio[1] = params->board_rev_gpios >> 16;
+	gpio[0] = params->board_rev_gpios[0] & 0xffff;
+	gpio[1] = params->board_rev_gpios[0] >> 16;
+	gpio[2] = params->board_rev_gpios[1] & 0xffff;
+	gpio[3] = params->board_rev_gpios[1] >> 16;
 	return gpio_decode_number(gpio, CONFIG_BOARD_REV_GPIO_COUNT);
 }
 

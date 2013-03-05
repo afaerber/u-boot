@@ -91,8 +91,8 @@
 #define CONFIG_ELOG_SIZE 0x4000
 #define CONFIG_ELOG_OFFSET (0x00400000 - CONFIG_ENV_SIZE - CONFIG_ELOG_SIZE)
 
-/* Number of GPIOS to use for board revision detection */
-#define CONFIG_BOARD_REV_GPIO_COUNT	2
+/* Maximum number of GPIOS to use for board revision detection */
+#define CONFIG_BOARD_REV_GPIO_COUNT	3
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */

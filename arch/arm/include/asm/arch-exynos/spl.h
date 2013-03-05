@@ -54,7 +54,9 @@ struct spl_machine_param {
 	 * s		serial base address
 	 * i		i2c base address for early access (meant for PMIC)
 	 * r		board rev GPIO numbers used to read board revision
-	 *			(lower halfword=bit 0, upper=bit 1)
+	 *			(lower halfword=tit 0, upper=tit 1)
+	 * R		more board rev GPIO numbers used to read board revision
+	 *			(lower halfword=tit 0, upper=tit 1)
 	 * M		Memory Manufacturer name
 	 * w		Bad Wake GPIO number
 	 * z		compression type
@@ -77,7 +79,7 @@ struct spl_machine_param {
 	unsigned	arm_freq_mhz;	/* ARM Frequency in MHz */
 	u32		serial_base;	/* Serial base address */
 	u32		i2c_base;	/* i2c base address */
-	u32		board_rev_gpios;	/* Board revision GPIOs */
+	u32		board_rev_gpios[2];	/* Board revision GPIOs */
 	enum mem_manuf	mem_manuf;	/* Memory Manufacturer */
 	u32		bad_wake_gpio;	/* If high at wake time disallow wake */
 	enum compress_t	compress_type;	/* Compression type */
