@@ -12,6 +12,7 @@
 #define DEBUG
 #include <common.h>
 #include <asm/errno.h>
+#include <asm/arch/exynos-cpufreq.h>
 #include <asm/arch/power.h>
 #include <asm/arch/s5p-dp.h>
 #include "board.h"
@@ -49,8 +50,9 @@ enum {
  */
 static void wait_in_low_power(void)
 {
-	/* TODO(vpalatin) real power management ! */
+	exynos5250_set_frequency(CPU_FREQ_L200);
 	udelay(1000000);
+	exynos5250_set_frequency(CPU_FREQ_L1700);
 }
 
 /**
