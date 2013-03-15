@@ -33,4 +33,7 @@ void board_i2c_init(const void *blob);
 /* Check the power status before starting full steam */
 void low_battery_init(void);
 
+/* Set the backlight PWM value */
+int board_dp_set_backlight(int percent);
+
 #endif

@@ -14,6 +14,7 @@
 #include <asm/errno.h>
 #include <asm/arch/power.h>
 #include <asm/arch/s5p-dp.h>
+#include "board.h"
 #include <cros/cros_splash.h>
 #include <mkbp.h>
 
@@ -24,6 +25,9 @@ DECLARE_GLOBAL_DATA_PTR;
 
 /* how long we are displaying the battery charging screen before powering off */
 #define BATTERY_SCREEN_DURATION_MSECS 10000 /* milliseconds */
+
+/* Backlight PWM duty cycle when displaying the low battery screen */
+#define BATTERY_SCREEN_BACKLIGHT_PERCENT 7 /* % of full brightness */
 
 /* delay necessary to drain a 64-char UART FIFO at 115 kBds */
 #define UART_FIFO_DRAIN_USECS 5000 /* microseconds */
@@ -61,8 +65,9 @@ static void charging_screen(void)
 
 	/* complete screen initialization */
 	exynos_lcd_check_next_stage(gd->fdt_blob, 1);
-	/* display the "battery is charging" screen */
-	cros_splash_display(0);
+	/* reduce backlight to the minimum */
+	if (board_dp_set_backlight(BATTERY_SCREEN_BACKLIGHT_PERCENT))
+		printf("%s: cannot set backlight\n", __func__);
 
 	/* wait for a fixed delay with the splash, then shutdown */
 	while (get_timer(t0) < BATTERY_SCREEN_DURATION_MSECS) {

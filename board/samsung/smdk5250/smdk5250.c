@@ -654,6 +654,9 @@ int board_dp_bridge_setup(const void *blob, unsigned *wait_ms)
 	return 0;
 }
 
+/* I2C bus controller index Parade PS8622 eDP/LVDS bridge */
+#define PS8622_I2C_BUS 7
+
 /**
  * Write a PS8622 eDP bridge i2c register
  *
@@ -676,7 +679,8 @@ static int ps8622_i2c_write(unsigned addr_off, unsigned char reg_addr,
 
 static void ps8622_init(void)
 {
-	i2c_set_bus_num(7);
+	unsigned int orig_bus = i2c_get_bus_num();
+	i2c_set_bus_num(PS8622_I2C_BUS);
 
 	debug("PS8622 I2C init\n");
 	ps8622_i2c_write(0x02, 0xa1, 0x01); /* HPD low */
@@ -753,7 +757,33 @@ static void ps8622_init(void)
 	ps8622_i2c_write(0x04, 0x54, 0x14); /* LC -> RCO */
 	ps8622_i2c_write(0x02, 0xa1, 0x91); /* HPD high */
 
-	i2c_set_bus_num(0);
+	i2c_set_bus_num(orig_bus);
+}
+
+int board_dp_set_backlight(int percent)
+{
+	int ps8622 = fdtdec_next_compatible(gd->fdt_blob, 0,
+					COMPAT_PARADE_PS8622);
+	int level = percent * 255 / 100;
+
+	assert(percent >= 0 && percent <= 100);
+	if (ps8622 >= 0) {
+		unsigned int orig_bus = i2c_get_bus_num();
+		int ret;
+
+		/*
+		 * we are making the hypothesis that ps8622_init already ran
+		 * at that point and the bridge is already setup in
+		 * internal PWM mode. (by putting 0xa0 in register 0xa5)
+		 */
+		i2c_set_bus_num(PS8622_I2C_BUS);
+		ret = ps8622_i2c_write(0x01, 0xa7, level);
+		i2c_set_bus_num(orig_bus);
+
+		return ret;
+	}
+
+	return -ENODEV;
 }
 
 int board_dp_bridge_init(const void *blob, unsigned *wait_ms)
