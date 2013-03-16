@@ -400,6 +400,6 @@ static inline void bootstage_set_next_id(int id)
 
 /* Helper macro for adding a bootstage to a line of code */
 #define BOOTSTAGE_MARKER()	\
-		bootstage_mark_code(__FILE__, __LINE__, __func__)
+		bootstage_mark_code(__FILE__, __func__, __LINE__)
 
 #endif
