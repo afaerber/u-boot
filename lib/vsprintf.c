@@ -692,9 +692,15 @@ static int vsnprintf_internal(char *buf, size_t size, const char *fmt,
 
 #ifdef CONFIG_SYS_VSNPRINTF
 	if (size > 0) {
-		ADDCH(str, '\0');
-		if (str > end)
+		if (str < end) {
+			/*
+			 * To return correct number of characters printed, str
+			 * should point to '\0'; so don't increment it here.
+			 */
+			*str = '\0';
+		} else {
 			end[-1] = '\0';
+		}
 	}
 #else
 	*str = '\0';
