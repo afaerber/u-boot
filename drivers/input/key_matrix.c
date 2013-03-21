@@ -44,7 +44,7 @@ static int has_ghosting(struct key_matrix *config, struct key_matrix_key *keys,
 	int key_in_same_col = 0, key_in_same_row = 0;
 	int i, j;
 
-	if (!config->ghost_filter || valid < 3)
+	if (!config->ghost_filter || valid < 4)
 		return 0;
 
 	for (i = 0; i < valid; i++) {
@@ -86,8 +86,11 @@ int key_matrix_decode(struct key_matrix *config, struct key_matrix_key keys[],
 		if (config->fn_keycode && pos == config->fn_pos)
 			keymap = config->fn_keycode;
 
-		/* Convert the (row, col) values into a keycode */
-		if (valid < max_keycodes)
+		/*
+		 * Convert the (row, col) values into a keycode
+		 * if there is one defined for this matrix position.
+		 */
+		if (keymap[pos] && (valid < max_keycodes))
 			keycode[valid++] = keymap[pos];
 		debug("    keycode=%d\n", keymap[pos]);
 	}
