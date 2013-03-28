@@ -44,6 +44,7 @@
 	};
 
 	i2c3: i2c@12c90000 {
+		speed = <400000>; /* 400 Kbps */
 		tpm@20 {
 			reg = <0x20>;
 			compatible = "infineon,slb9645-tpm";

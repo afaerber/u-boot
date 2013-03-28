@@ -137,8 +137,10 @@ static void ReadWriteByte(struct s3c24x0_i2c *i2c)
 	writel(readl(&i2c->iiccon) & ~I2CCON_IRPND, &i2c->iiccon);
 }
 
-static void i2c_ch_init(struct s3c24x0_i2c *i2c, int speed, int slaveadd)
+static void i2c_ch_init(struct s3c24x0_i2c_bus *bus, int slaveadd)
 {
+	struct s3c24x0_i2c *i2c = bus->regs;
+	int speed = bus->speed;
 	ulong freq, pres = 16, div;
 
 	freq = clock_get_periph_rate(PERIPH_ID_I2C0);
@@ -184,6 +186,8 @@ void board_i2c_init(const void *blob)
 		if (node < 0)
 			continue;
 		bus = &i2c_bus[i2c_busses];
+		bus->speed = fdtdec_get_int(blob, node, "speed",
+				CONFIG_SYS_I2C_SPEED);
 		bus->regs = (struct s3c24x0_i2c *)
 			fdtdec_get_addr(blob, node, "reg");
 		bus->id = (enum periph_id)
@@ -198,6 +202,7 @@ void board_i2c_init(const void *blob)
 		uintptr_t reg_addr = samsung_get_base_i2c() +
 			EXYNOS_I2C_SPACING * i;
 
+		i2c_bus[i].speed = CONFIG_SYS_I2C_SPEED;
 		i2c_bus[i].regs = (struct s3c24x0_i2c_bus *)reg_addr;
 		i2c_bus[i].id = periph_for_dev[i];
 	}
@@ -213,7 +218,7 @@ static void i2c_bus_init(struct s3c24x0_i2c_bus *i2c, unsigned int bus)
 {
 	exynos_pinmux_config(i2c->id, 0);
 
-	i2c_ch_init(i2c->regs, CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+	i2c_ch_init(i2c, CONFIG_SYS_I2C_SLAVE);
 }
 #else
 static void i2c_bus_init(struct s3c24x0_i2c_bus *i2c, unsigned int bus) {}
@@ -240,6 +245,22 @@ unsigned int i2c_get_bus_num(void)
 #endif
 
 #ifdef CONFIG_OF_CONTROL
+unsigned int i2c_get_bus_speed(void)
+{
+	struct s3c24x0_i2c_bus *i2c = get_bus(g_current_bus);
+	return i2c->speed;
+}
+
+int i2c_set_bus_speed(unsigned int speed)
+{
+	struct s3c24x0_i2c_bus *i2c = get_bus(g_current_bus);
+
+	if (speed != i2c->speed)
+		return -1;
+
+	return 0;
+}
+
 int i2c_get_bus_num_fdt(const void *blob, int node)
 {
 	enum fdt_compat_id compat;
@@ -278,7 +299,7 @@ int i2c_reset_port_fdt(const void *blob, int node)
 		return -1;
 	}
 
-	i2c_ch_init(i2c->regs, CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+	i2c_ch_init(i2c, CONFIG_SYS_I2C_SLAVE);
 
 	return 0;
 }
@@ -326,6 +347,9 @@ void i2c_init(int speed, int slaveadd)
 	if (!i2c)
 		return;
 
+	/* Set new bus speed */
+	i2c->speed = speed;
+
 	i2c_bus_init(i2c, g_current_bus);
 
 	/* wait for some time to give previous transfer a chance to finish */
@@ -338,7 +362,7 @@ void i2c_init(int speed, int slaveadd)
 	gpio = exynos_get_base_gpio1();
 	writel((readl(&gpio->b3.con) & ~0x00FF) | 0x0022, &gpio->b3.con);
 
-	i2c_ch_init(i2c->regs, speed, slaveadd);
+	i2c_ch_init(i2c, slaveadd);
 }
 
 /*
