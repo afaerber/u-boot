@@ -133,13 +133,13 @@ VbError_t VbExBeep(uint32_t msec, uint32_t frequency)
 
 	ret = sound_init(gd->fdt_blob);
 	if (ret) {
-		VbExError("Failed to initialize sound.\n");
+		VBDEBUG("Failed to initialize sound.\n");
 		return VBERROR_NO_SOUND;
 	}
 
 	ret = sound_play(msec, frequency);
 	if (ret) {
-		VbExError("Failed to play beep.\n");
+		VBDEBUG("Failed to play beep.\n");
 		return VBERROR_NO_SOUND;
 	}
 
