@@ -202,7 +202,12 @@ static int mshci_set_transfer_mode(struct mshci_host *host,
 {
 	int mode = CMD_DATA_EXP_BIT;
 
-	if (data->blocks > 1)
+	/*
+	 * If auto stop is enabled in the control register,
+	 * send a STOP command after multiple block read/write
+	 */
+	if ((data->blocks > 1) &&
+	    (readl(&host->reg->ctrl) & SEND_AS_CCSD))
 		mode |= CMD_SENT_AUTO_STOP_BIT;
 	if (data->flags & MMC_DATA_WRITE)
 		mode |= CMD_RW_BIT;
@@ -559,10 +564,12 @@ static int s5p_mphci_init(struct mmc *mmc)
 		return -1;
 	}
 
+#ifdef CONFIG_MSHCI_AUTO_STOP
 	/* set auto stop command */
 	ier = readl(&host->reg->ctrl);
 	ier |= SEND_AS_CCSD;
 	writel(ier, &host->reg->ctrl);
+#endif
 
 	/* set 1bit card mode */
 	writel(PORT0_CARD_WIDTH1, &host->reg->ctype);
