@@ -551,7 +551,9 @@ static int mshci_init(struct mshci_host *host)
 static int s5p_mphci_init(struct mmc *mmc)
 {
 	struct mshci_host *host = (struct mshci_host *)mmc->priv;
+#ifdef CONFIG_MSHCI_AUTO_STOP
 	unsigned int ier;
+#endif
 
 	if (mshci_init(host)) {
 		debug("mshci_init() failed\n");
