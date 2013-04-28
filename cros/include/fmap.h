@@ -62,6 +62,7 @@ struct twostop_fmap {
 	struct fmap_firmware_entry readwrite_a;
 	struct fmap_firmware_entry readwrite_b;
 	struct fmap_entry readwrite_devkey;
+	struct fmap_entry elog;
 	u32  flash_base;
 };
 
