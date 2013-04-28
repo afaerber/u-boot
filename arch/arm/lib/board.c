@@ -41,6 +41,7 @@
 #include <common.h>
 #include <asm-generic/sections.h>
 #include <command.h>
+#include <elog.h>
 #include <environment.h>
 #include <malloc.h>
 #include <stdio_dev.h>
@@ -624,6 +625,11 @@ void board_init_r(gd_t *id, ulong dest_addr)
 #ifdef CONFIG_HAS_DATAFLASH
 	AT91F_DataflashInit();
 	dataflash_print_info();
+#endif
+
+#if defined(CONFIG_ELOG)
+	elog_init();
+	elog_add_event_dword(ELOG_TYPE_BOOT, 0);
 #endif
 
 	/* initialize environment */
