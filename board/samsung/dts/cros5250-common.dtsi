@@ -143,6 +143,9 @@
 		firmware_storage_spi: flash@0 {
 			bus = <1>;
 			spi-max-frequency = <45000000>;
+
+			elog-shrink-size = <0x400>;
+			elog-full-threshold = <0xc00>;
 		};
 	};
 
