@@ -195,7 +195,8 @@ int get_partition_info_efi(block_dev_desc_t * dev_desc, int part,
 
 int test_part_efi(block_dev_desc_t * dev_desc)
 {
-	ALLOC_CACHE_ALIGN_BUFFER(legacy_mbr, legacymbr, 1);
+	ALLOC_CACHE_ALIGN_BUFFER(legacy_mbr, legacymbr,
+		DIV_ROUND_UP(dev_desc->blksz, sizeof(legacy_mbr)));
 
 	/* Read legacy MBR from block 0 and validate it */
 	if ((dev_desc->block_read(dev_desc->dev, 0, 1, (ulong *)legacymbr) != 1)
