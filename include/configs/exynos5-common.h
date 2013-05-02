@@ -118,7 +118,8 @@
 /* Enable SPI H/W Controller Driver support */
 #define CONFIG_EXYNOS_SPI
 
-/* RTC driver for the event log */
+/* Event log */
+#define CONFIG_ELOG
 #define CONFIG_RTC_S5M8767
 
 #define CONFIG_CMD_SF
