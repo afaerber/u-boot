@@ -91,8 +91,9 @@ struct s5m8767_para {
 	u32	vol_div;
 };
 
-/* I2C device address for pmic s5m8767 */
+/* I2C device addresses for pmic s5m8767 */
 #define S5M8767_I2C_ADDR 0x66
+#define S5M8767_RTC_I2C_ADDR 0x6
 
 enum {
 	S5M8767_REG_DISABLE = 0,
