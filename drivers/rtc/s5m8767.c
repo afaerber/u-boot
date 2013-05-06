@@ -23,6 +23,7 @@
 #include <i2c.h>
 #include <rtc.h>
 #include <s5m8767.h>
+#include <asm/arch-exynos/spl.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -112,21 +113,32 @@ static int s5m8767_rtc_read(unsigned int reg, uint8_t *val)
 	return i2c_read(S5M8767_RTC_I2C_ADDR, reg, 1, val, 1);
 }
 
-static int init_done;
+static int init_done __attribute__((section(".data")));
 
 static int rtc_init(void)
 {
+#ifdef CONFIG_SPL_BUILD
+	struct spl_machine_param *params = spl_get_machine_params();
+#else
 	int res;
+#endif
 
 	if (init_done)
 		return 0;
 
+#ifdef CONFIG_SPL_BUILD
+	if (params->rtc_type != SPL_RTC_TYPE_S5M8767) {
+		printf("%s: Not the right type of PMIC.\n", __func__);
+		return -1;
+	}
+#else
 	res = fdt_node_offset_by_compatible(gd->fdt_blob, 0,
 					    "samsung,s5m8767-pmic");
 	if (res < 0) {
 		printf("%s: Failed to find s5m8767 in the fdt.\n", __func__);
 		return -1;
 	}
+#endif
 
 	if (s5m8767_rtc_write(S5M8767_RTC_CTRLM,
 			      S5M8767_RTC_CTRLM_BCDM |

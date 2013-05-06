@@ -31,6 +31,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#ifndef CONFIG_SPL_BUILD
+
 enum {
 	SF_DEFAULT_SPEED = 1000000,
 };
@@ -54,6 +56,78 @@ static u16 event_count;
 
 static int elog_initialized;
 static struct spi_flash *elog_spi;
+
+#endif
+
+/*
+ * Update the checksum at the last byte
+ */
+static void elog_update_checksum(struct event_header *event, u8 checksum)
+{
+	u8 *event_data = (u8 *)event;
+	event_data[event->length - 1] = checksum;
+}
+
+/*
+ * Simple byte checksum for events
+ */
+static u8 elog_checksum_event(struct event_header *event)
+{
+	u8 index, checksum = 0;
+	u8 *data = (u8 *)event;
+
+	for (index = 0; index < event->length; index++)
+		checksum += data[index];
+	return checksum;
+}
+
+/*
+ * Populate timestamp in event header with current time
+ */
+static void elog_fill_timestamp(struct event_header *event)
+{
+	struct rtc_time time;
+
+	rtc_get(&time);
+	event->second = bin2bcd(time.tm_sec);
+	event->minute = bin2bcd(time.tm_min);
+	event->hour   = bin2bcd(time.tm_hour);
+	event->day    = bin2bcd(time.tm_mday);
+	event->month  = bin2bcd(time.tm_mon);
+	event->year   = bin2bcd(time.tm_year % 100);
+
+	/* Basic sanity check of expected ranges */
+	if (event->month > 0x12 || event->day > 0x31 || event->hour > 0x23 ||
+	    event->minute > 0x59 || event->second > 0x59) {
+		event->year   = 0;
+		event->month  = 0;
+		event->day    = 0;
+		event->hour   = 0;
+		event->minute = 0;
+		event->second = 0;
+	}
+}
+
+/*
+ * Fill out an event structure
+ */
+void elog_prepare_event(void *buf, u8 event_type, void *data, u8 data_size)
+{
+	struct event_header *event = buf;
+
+	event->type = event_type;
+	event->length = sizeof(*event) + data_size + 1;
+	elog_fill_timestamp(event);
+
+	if (data_size)
+		memcpy(&event[1], data, data_size);
+
+	/* Zero the checksum byte and then compute checksum */
+	elog_update_checksum(event, 0);
+	elog_update_checksum(event, -(elog_checksum_event(event)));
+}
+
+#ifndef CONFIG_SPL_BUILD
 
 /*
  * Convert a memory mapped flash address into a flash offset
@@ -82,28 +156,6 @@ static inline struct event_header*
 elog_get_event_base(u32 offset)
 {
 	return (struct event_header *)&elog_area->data[offset];
-}
-
-/*
- * Update the checksum at the last byte
- */
-static void elog_update_checksum(struct event_header *event, u8 checksum)
-{
-	u8 *event_data = (u8 *)event;
-	event_data[event->length - 1] = checksum;
-}
-
-/*
- * Simple byte checksum for events
- */
-static u8 elog_checksum_event(struct event_header *event)
-{
-	u8 index, checksum = 0;
-	u8 *data = (u8 *)event;
-
-	for (index = 0; index < event->length; index++)
-		checksum += data[index];
-	return checksum;
 }
 
 /*
@@ -496,33 +548,6 @@ int elog_init(void)
 }
 
 /*
- * Populate timestamp in event header with current time
- */
-static void elog_fill_timestamp(struct event_header *event)
-{
-	struct rtc_time time;
-
-	rtc_get(&time);
-	event->second = bin2bcd(time.tm_sec);
-	event->minute = bin2bcd(time.tm_min);
-	event->hour   = bin2bcd(time.tm_hour);
-	event->day    = bin2bcd(time.tm_mday);
-	event->month  = bin2bcd(time.tm_mon);
-	event->year   = bin2bcd(time.tm_year % 100);
-
-	/* Basic sanity check of expected ranges */
-	if (event->month > 0x12 || event->day > 0x31 || event->hour > 0x23 ||
-	    event->minute > 0x59 || event->second > 0x59) {
-		event->year   = 0;
-		event->month  = 0;
-		event->day    = 0;
-		event->hour   = 0;
-		event->minute = 0;
-		event->second = 0;
-	}
-}
-
-/*
  * Add an event to the log
  */
 void elog_add_event_raw(u8 event_type, void *data, u8 data_size)
@@ -554,16 +579,7 @@ void elog_add_event_raw(u8 event_type, void *data, u8 data_size)
 
 	/* Fill out event data */
 	event = elog_get_event_base(next_event_offset);
-	event->type = event_type;
-	event->length = event_size;
-	elog_fill_timestamp(event);
-
-	if (data_size)
-		memcpy(&event[1], data, data_size);
-
-	/* Zero the checksum byte and then compute checksum */
-	elog_update_checksum(event, 0);
-	elog_update_checksum(event, -(elog_checksum_event(event)));
+	elog_prepare_event(event, event_type, data, data_size);
 
 	/* Update the ELOG state */
 	event_count++;
@@ -608,3 +624,5 @@ void elog_add_event_wake(u8 source, u32 instance)
 	};
 	elog_add_event_raw(ELOG_TYPE_WAKE_SOURCE, &wake, sizeof(wake));
 }
+
+#endif

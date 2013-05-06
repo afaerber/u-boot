@@ -58,6 +58,8 @@ LIBS-$(CONFIG_SPL_ONENAND_SUPPORT) += drivers/mtd/onenand/libonenand.o
 LIBS-$(CONFIG_SPL_DMA_SUPPORT) += drivers/dma/libdma.o
 LIBS-$(CONFIG_SPL_POST_MEM_SUPPORT) += post/drivers/memory.o
 LIBS-$(CONFIG_SPL_LZO_SUPPORT) += lib/lzo/lzo1x_decompress.o
+LIBS-$(CONFIG_SPL_RTC_SUPPORT) += drivers/rtc/librtc.o
+LIBS-$(CONFIG_SPL_ELOG_SUPPORT) += drivers/misc/elog.o
 
 ifneq ($(CONFIG_EXYNOS4)$(CONFIG_EXYNOS5),)
 LIBS-y += $(CPUDIR)/s5p-common/libs5p-common.o

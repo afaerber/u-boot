@@ -145,13 +145,43 @@ struct elog_event_data_me_extended {
 /* EC Shutdown Reason */
 #define ELOG_TYPE_EC_SHUTDOWN             0xa5
 
+/* ELOG header */
+struct elog_header {
+	u32 magic;
+	u8 version;
+	u8 header_size;
+	u8 reserved[2];
+} __packed;
+
+/* ELOG related constants */
+#define ELOG_SIGNATURE			0x474f4c45  /* 'ELOG' */
+#define ELOG_VERSION			1
+
+/* SMBIOS event log header */
+struct event_header {
+	u8 type;
+	u8 length;
+	u8 year;
+	u8 month;
+	u8 day;
+	u8 hour;
+	u8 minute;
+	u8 second;
+} __packed;
+
+#ifndef CONFIG_SPL_BUILD
 extern int elog_init(void);
 extern int elog_clear(void);
+#endif
+extern void elog_prepare_event(void *buf, u8 event_type, void *data,
+			       u8 data_size);
+#ifndef CONFIG_SPL_BUILD
 extern void elog_add_event_raw(u8 event_type, void *data, u8 data_size);
 extern void elog_add_event(u8 event_type);
 extern void elog_add_event_byte(u8 event_type, u8 data);
 extern void elog_add_event_word(u8 event_type, u16 data);
 extern void elog_add_event_dword(u8 event_type, u32 data);
 extern void elog_add_event_wake(u8 source, u32 instance);
+#endif
 
 #endif /* ELOG_H_ */
