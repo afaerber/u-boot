@@ -91,7 +91,7 @@
 	};
 
 	ramoops {
-		reg = <0x41f00000 0x00100000>;
+		reg = <0x41f00000 0x000ff000>;
 	};
 
 	sdhci@12200000 {
@@ -143,6 +143,12 @@
 		firmware_storage_spi: flash@0 {
 			bus = <1>;
 			spi-max-frequency = <45000000>;
+
+			/*
+			 * A region for the kernel to store a panic event
+			 * which the firmware will add to the log.
+			 */
+			elog-panic-event = <0x41fff000 0x1000>;
 
 			elog-shrink-size = <0x400>;
 			elog-full-threshold = <0xc00>;

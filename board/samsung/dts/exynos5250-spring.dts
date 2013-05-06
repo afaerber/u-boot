@@ -9,6 +9,10 @@
 */
 
 /dts-v1/;
+
+/* Reserve a page to stuff a panic event for the event log. */
+/memreserve/ 0x41eff000 0x1000;
+
 /include/ "exynos5250.dtsi"
 /include/ "flashmap-exynos-ro.dtsi"
 /include/ "flashmap-4mb-rw.dtsi"
