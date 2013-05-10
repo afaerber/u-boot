@@ -33,6 +33,9 @@ DECLARE_GLOBAL_DATA_PTR;
 /* delay necessary to drain a 64-char UART FIFO at 115 kBds */
 #define UART_FIFO_DRAIN_USECS 5000 /* microseconds */
 
+/* USB device type for the dedicated charger */
+#define USB_TYPE_BRICK 0x000010
+
 /* Smart battery standard registers */
 enum {
 	REG_TEMPERATURE     = 0x08,
@@ -53,6 +56,27 @@ static void wait_in_low_power(void)
 	exynos5250_set_frequency(CPU_FREQ_L200);
 	udelay(1000000);
 	exynos5250_set_frequency(CPU_FREQ_L1700);
+}
+
+/**
+ * Limit the peak power consumption at startup
+ *
+ * Set caps on various components operating mode to ensure we are not exceeding
+ * the available current and browning out the platform.
+ */
+static void limited_power_mode(void)
+{
+	/* Limit the CPU frequency to 800 Mhz */
+	exynos5250_set_frequency(CPU_FREQ_L800);
+	board_set_max_cpu_freq(800000);
+
+	/*
+	 * Other possible limitations :
+	 * - cap the backlight
+	 *  note : it's too early to call board_dp_set_backlight(<cap_percent>)
+	 * - switch off USB VBUS
+	 */
+	debug("Limited power mode set.\n");
 }
 
 /**
@@ -122,6 +146,16 @@ static int energy_good(struct mkbp_dev *mkbp_dev)
 
 	debug("%s: battery level %d%% charge limit %d mA, keep charging...\n",
 		 __func__, bat_charge, info->usb_current_limit);
+
+	if (info->usb_dev_type & USB_TYPE_BRICK) {
+		/*
+		 * that's our "high power" brick,
+		 * let's continue booting with some restrictions.
+		 */
+		limited_power_mode();
+		return 1;
+	}
+
 	/* we want the low battery screen */
 	return 0;
 }

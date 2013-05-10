@@ -374,6 +374,26 @@ static int board_i2c_arb_init(const void *blob)
 	return 0;
 }
 
+/* maximum CPU frequency set in the kernel device tree */
+static int max_cpu_freq_khz;
+
+void board_set_max_cpu_freq(int freq_khz)
+{
+	max_cpu_freq_khz = freq_khz;
+}
+
+static int ft_board_max_cpu_freq(void *blob, bd_t *bd)
+{
+	if (max_cpu_freq_khz) {
+		do_fixup_by_path_u32(blob, "/cpus/cpu@0",
+				"clock-frequency-limit", max_cpu_freq_khz, 1);
+		do_fixup_by_path_u32(blob, "/cpus/cpu@1",
+				"clock-frequency-limit", max_cpu_freq_khz, 1);
+	}
+
+	return 0;
+}
+
 int board_get_pmic(void)
 {
 	int ret;
@@ -515,6 +535,8 @@ int ft_system_setup(void *blob, bd_t *bd)
 	if (ft_board_setup_gpios(blob, bd))
 		return -1;
 	if (ft_board_setup_pmic(blob, bd))
+		return -1;
+	if (ft_board_max_cpu_freq(blob, bd))
 		return -1;
 	return ft_board_setup_tpm_resume(blob, bd);
 }

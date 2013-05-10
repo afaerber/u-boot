@@ -36,4 +36,11 @@ void low_battery_init(void);
 /* Set the backlight PWM value */
 int board_dp_set_backlight(int percent);
 
+/* Cap CPU frequency to limit power draw
+ *
+ * Set a device tree node to ask the kernel cpufreq
+ * driver to limit the maximum frequency.
+ */
+void board_set_max_cpu_freq(int freq_khz);
+
 #endif
