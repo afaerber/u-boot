@@ -150,6 +150,9 @@ int mmc_set_blocklen(struct mmc *mmc, int len)
 {
 	struct mmc_cmd cmd;
 
+	if (mmc->card_caps & (MMC_MODE_BLOCKADDR | MMC_MODE_HS_DDR_52MHz))
+		return 0;
+
 	cmd.cmdidx = MMC_CMD_SET_BLOCKLEN;
 	cmd.resp_type = MMC_RSP_R1;
 	cmd.cmdarg = len;
@@ -638,9 +641,17 @@ int mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value)
 
 int mmc_change_freq(struct mmc *mmc)
 {
+	const int card_type_and_cap[][2] = {
+		{ EXT_CSD_CARD_TYPE_26, MMC_MODE_HS },
+		{ EXT_CSD_CARD_TYPE_52, MMC_MODE_HS_52MHz },
+		{ EXT_CSD_CARD_TYPE_DDR_52, MMC_MODE_HS_DDR_52MHz },
+		{ EXT_CSD_CARD_TYPE_SDR_1_8V, MMC_MODE_HS_SDR_200MHz },
+		{ EXT_CSD_CARD_TYPE_SDR_1_2V, MMC_MODE_HS_SDR_200MHz },
+	};
+
 	ALLOC_CACHE_ALIGN_BUFFER(unsigned char, ext_csd, 512);
 	char cardtype;
-	int err;
+	int i, err;
 
 	mmc->card_caps = 0;
 
@@ -656,7 +667,7 @@ int mmc_change_freq(struct mmc *mmc)
 	if (err)
 		return err;
 
-	cardtype = ext_csd[EXT_CSD_CARD_TYPE] & 0xf;
+	cardtype = ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_MASK;
 
 	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_HS_TIMING, 1);
 
@@ -673,11 +684,11 @@ int mmc_change_freq(struct mmc *mmc)
 	if (!ext_csd[EXT_CSD_HS_TIMING])
 		return 0;
 
-	/* High Speed is set, there are two types: 52MHz and 26MHz */
-	if (cardtype & MMC_HS_52MHZ)
-		mmc->card_caps |= MMC_MODE_HS_52MHz | MMC_MODE_HS;
-	else
-		mmc->card_caps |= MMC_MODE_HS;
+	/* High Speed is set, test high speed type */
+	for (i = 0; i < ARRAY_SIZE(card_type_and_cap); i++) {
+		if (cardtype & card_type_and_cap[i][0])
+			mmc->card_caps |= card_type_and_cap[i][1];
+	}
 
 	return 0;
 }
@@ -896,7 +907,20 @@ void mmc_set_bus_width(struct mmc *mmc, uint width)
 
 int mmc_startup(struct mmc *mmc)
 {
-	int err, width;
+	const struct {
+		int width_csd;
+		int width_ddr_csd;
+		int width;
+		int card_cap;
+	} bus_width_table[] = {
+		{ EXT_CSD_BUS_WIDTH_8, EXT_CSD_DDR_BUS_WIDTH_8, 8,
+			MMC_MODE_8BIT },
+		{ EXT_CSD_BUS_WIDTH_4, EXT_CSD_DDR_BUS_WIDTH_4, 4,
+			MMC_MODE_4BIT },
+		{ EXT_CSD_BUS_WIDTH_1, EXT_CSD_BUS_WIDTH_1, 1, 0 },
+	};
+
+	int i, width_csd, err;
 	uint mult, freq;
 	u64 cmult, csize, capacity;
 	struct mmc_cmd cmd;
@@ -1121,19 +1145,19 @@ int mmc_startup(struct mmc *mmc)
 		else
 			mmc_set_clock(mmc, 25000000);
 	} else {
-		for (width = EXT_CSD_BUS_WIDTH_8; width >= 0; width--) {
-			/* Set the card to use 4 bit*/
+		for (i = 0; i < ARRAY_SIZE(bus_width_table); i++) {
+			if (mmc->card_caps & MMC_MODE_HS_DDR_52MHz)
+				width_csd = bus_width_table[i].width_ddr_csd;
+			else
+				width_csd = bus_width_table[i].width_csd;
 			err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
-					EXT_CSD_BUS_WIDTH, width);
-
+					EXT_CSD_BUS_WIDTH, width_csd);
 			if (err)
 				continue;
 
-			if (!width) {
-				mmc_set_bus_width(mmc, 1);
+			mmc_set_bus_width(mmc, bus_width_table[i].width);
+			if (bus_width_table[i].width == 1)
 				break;
-			} else
-				mmc_set_bus_width(mmc, 4 * width);
 
 			err = mmc_send_ext_csd(mmc, test_csd);
 			if (!err && ext_csd[EXT_CSD_PARTITIONING_SUPPORT] \
@@ -1147,7 +1171,7 @@ int mmc_startup(struct mmc *mmc)
 				 && memcmp(&ext_csd[EXT_CSD_SEC_CNT], \
 					&test_csd[EXT_CSD_SEC_CNT], 4) == 0) {
 
-				mmc->card_caps |= width;
+				mmc->card_caps |= bus_width_table[i].card_cap;
 				break;
 			}
 		}

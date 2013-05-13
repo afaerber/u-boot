@@ -484,6 +484,7 @@ static int mshci_change_clock(struct mshci_host *host, uint clock)
 static void s5p_mshci_set_ios(struct mmc *mmc)
 {
 	struct mshci_host *host = mmc->priv;
+	uint32_t reg, mask, card_number;
 
 	debug("bus_width: %x, clock: %d\n", mmc->bus_width, mmc->clock);
 
@@ -501,6 +502,21 @@ static void s5p_mshci_set_ios(struct mmc *mmc)
 		writel(0x03030001, &host->reg->clksel);
 	if (host->peripheral == PERIPH_ID_SDMMC2)
 		writel(0x03020001, &host->reg->clksel);
+
+	if (mmc->card_caps & MMC_MODE_HS_DDR_52MHz) {
+		/*
+		 * Assume card number 0 is PERIPH_ID_SDMMC0, card number 1
+		 * is PERIPH_ID_SDMMC1, and so on.
+		 */
+		card_number = host->peripheral - PERIPH_ID_SDMMC0;
+		mask = 1 << (card_number + 16);
+		reg = readl(&host->reg->uhs_reg);
+		if (mmc->host_caps & MMC_MODE_HS_DDR_52MHz)
+			reg |= mask;
+		else
+			reg &= ~mask;
+		writel(reg, &host->reg->uhs_reg);
+	}
 }
 
 /*
@@ -617,7 +633,10 @@ static int s5p_mshci_initialize(struct fdt_mshci *config)
 	mmc->init = s5p_mphci_init;
 
 	mmc->voltages = MMC_VDD_32_33 | MMC_VDD_33_34;
-	mmc->host_caps = MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_HC;
+	mmc->host_caps = MMC_MODE_HS_DDR_52MHz |
+			 MMC_MODE_HS_52MHz |
+			 MMC_MODE_HS |
+			 MMC_MODE_HC;
 
 	if (config->bus_width == 8)
 		mmc->host_caps |= MMC_MODE_8BIT;
