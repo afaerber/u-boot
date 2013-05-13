@@ -200,6 +200,8 @@
 #define CONFIG_VDD_LDO3_MV	1800 /* 1.8v */
 #define CONFIG_VDD_LDO5_MV	1800 /* 1.8v */
 #define CONFIG_VDD_LDO10_MV	1800 /* 1.8v */
+#define CONFIG_VDD_LDO11_MV	1800 /* 1.8v */
+#define CONFIG_VDD_LDO13_MV	1800 /* 1.8v */
 #define CONFIG_VDD_LDO17_MV	1200 /* 1.2v */
 
 /* Miscellaneous configurable options */
