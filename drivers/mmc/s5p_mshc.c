@@ -339,8 +339,8 @@ static int s5p_mshci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 			if (get_timer(start) > COMMAND_TIMEOUT) {
 				debug("timeout on data error\n");
 				return -1;
+			}
 		}
-	}
 		writel(mask, &host->reg->rintsts);
 		if (data->flags & MMC_DATA_READ) {
 			data_start = (ulong)data->dest;
