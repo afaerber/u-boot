@@ -368,6 +368,7 @@ int usb_set_maxpacket(struct usb_device *dev)
 /*******************************************************************************
  * Parse the config, located in buffer, and fills the dev->config structure.
  * Note that all little/big endian swapping are done automatically.
+ * (wTotalLength has already been swapped when it was read.)
  */
 int usb_parse_config(struct usb_device *dev, unsigned char *buffer, int cfgno)
 {
@@ -387,24 +388,33 @@ int usb_parse_config(struct usb_device *dev, unsigned char *buffer, int cfgno)
 			head->bDescriptorType);
 		return -1;
 	}
-	memcpy(&dev->config, buffer, buffer[0]);
-	le16_to_cpus(&(dev->config.desc.wTotalLength));
+	memcpy(&dev->config, buffer, USB_DT_CONFIG_SIZE);
 	dev->config.no_of_if = 0;
 
 	index = dev->config.desc.bLength;
 	/* Ok the first entry must be a configuration entry,
 	 * now process the others */
 	head = (struct usb_descriptor_header *) &buffer[index];
-	while (index + 1 < dev->config.desc.wTotalLength) {
+	while (index + 1 < dev->config.desc.wTotalLength && head->bLength) {
 		switch (head->bDescriptorType) {
 		case USB_DT_INTERFACE:
+			if (index + USB_DT_INTERFACE_SIZE >
+			    dev->config.desc.wTotalLength) {
+				puts("USB IF descriptor overflowed buffer!\n");
+				break;
+			}
 			if (((struct usb_interface_descriptor *) \
 			     &buffer[index])->bInterfaceNumber != curr_if_num) {
 				/* this is a new interface, copy new desc */
 				ifno = dev->config.no_of_if;
+				if (ifno >= USB_MAXINTERFACES) {
+					puts("Too many USB interfaces!\n");
+					/* try to go on with what we have */
+					return 1;
+				}
 				dev->config.no_of_if++;
 				memcpy(&dev->config.if_desc[ifno],
-					&buffer[index], buffer[index]);
+					&buffer[index], USB_DT_INTERFACE_SIZE);
 				dev->config.if_desc[ifno].no_of_ep = 0;
 				dev->config.if_desc[ifno].num_altsetting = 1;
 				curr_if_num =
@@ -415,11 +425,25 @@ int usb_parse_config(struct usb_device *dev, unsigned char *buffer, int cfgno)
 			}
 			break;
 		case USB_DT_ENDPOINT:
+			if (index + USB_DT_ENDPOINT_SIZE >
+			    dev->config.desc.wTotalLength) {
+				puts("USB EP descriptor overflowed buffer!\n");
+				break;
+			}
+			if (ifno < 0) {
+				puts("Endpoint descriptor out of order!\n");
+				break;
+			}
 			epno = dev->config.if_desc[ifno].no_of_ep;
+			if (epno > USB_MAXENDPOINTS) {
+				printf("Interface %d has too many endpoints!\n",
+					dev->config.if_desc[ifno].desc.bInterfaceNumber);
+				return 1;
+			}
 			/* found an endpoint */
 			dev->config.if_desc[ifno].no_of_ep++;
 			memcpy(&dev->config.if_desc[ifno].ep_desc[epno],
-				&buffer[index], buffer[index]);
+				&buffer[index], USB_DT_ENDPOINT_SIZE);
 			ep_wMaxPacketSize = get_unaligned(&dev->config.\
 							if_desc[ifno].\
 							ep_desc[epno].\
@@ -506,7 +530,7 @@ int usb_get_configuration_no(struct usb_device *dev,
 			     unsigned char *buffer, int cfgno)
 {
 	int result;
-	unsigned int tmp;
+	unsigned int length;
 	struct usb_configuration_descriptor *config;
 
 	config = (struct usb_configuration_descriptor *)&buffer[0];
@@ -520,17 +544,19 @@ int usb_get_configuration_no(struct usb_device *dev,
 				"(expected %i, got %i)\n", 9, result);
 		return -1;
 	}
-	tmp = le16_to_cpu(config->wTotalLength);
+	length = le16_to_cpu(config->wTotalLength);
 
-	if (tmp > USB_BUFSIZ) {
-		printf("usb_get_configuration_no: failed to get " \
-		       "descriptor - too long: %d\n", tmp);
+	if (length > USB_BUFSIZ) {
+		printf("%s: failed to get descriptor - too long: %d\n",
+			__func__, length);
 		return -1;
 	}
 
-	result = usb_get_descriptor(dev, USB_DT_CONFIG, cfgno, buffer, tmp);
+	result = usb_get_descriptor(dev, USB_DT_CONFIG, cfgno, buffer, length);
 	USB_PRINTF("get_conf_no %d Result %d, wLength %d\n",
-		   cfgno, result, tmp);
+		   cfgno, result, length);
+	config->wTotalLength = length; /* validated, with CPU byte order */
+
 	return result;
 }
 

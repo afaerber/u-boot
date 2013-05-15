@@ -345,7 +345,7 @@ void usb_hub_port_connect_change(struct usb_device *dev, int port)
 
 int usb_hub_configure(struct usb_device *dev)
 {
-	int i;
+	int i, length;
 	ALLOC_CACHE_ALIGN_BUFFER(unsigned char, buffer, USB_BUFSIZ);
 	unsigned char *bitmap;
 	struct usb_hub_descriptor *descriptor;
@@ -367,21 +367,14 @@ int usb_hub_configure(struct usb_device *dev)
 	}
 	descriptor = (struct usb_hub_descriptor *)buffer;
 
-	/* silence compiler warning if USB_BUFSIZ is > 256 [= sizeof(char)] */
-	i = descriptor->bLength;
-	if (i > USB_BUFSIZ) {
-		USB_HUB_PRINTF("usb_hub_configure: failed to get hub " \
-				"descriptor - too long: %d\n",
-				descriptor->bLength);
-		return -1;
-	}
+	length = min(descriptor->bLength, sizeof(struct usb_hub_descriptor));
 
-	if (usb_get_hub_descriptor(dev, buffer, descriptor->bLength) < 0) {
+	if (usb_get_hub_descriptor(dev, buffer, length) < 0) {
 		USB_HUB_PRINTF("usb_hub_configure: failed to get hub " \
 				"descriptor 2nd giving up %lX\n", dev->status);
 		return -1;
 	}
-	memcpy((unsigned char *)&hub->desc, buffer, descriptor->bLength);
+	memcpy((unsigned char *)&hub->desc, buffer, length);
 	/* adjust 16bit values */
 	hub->desc.wHubCharacteristics =
 				le16_to_cpu(descriptor->wHubCharacteristics);
