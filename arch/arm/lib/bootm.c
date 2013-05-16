@@ -210,16 +210,6 @@ static int bootm_linux_fdt(int machid, bootm_headers_t *images)
 	ret = boot_relocate_fdt(lmb, of_flat_tree, &of_size);
 	if (ret)
 		return ret;
-#ifdef CONFIG_OF_BOARD_SETUP
-	/* Call the board-specific fixup routine */
-	ret = ft_board_setup(*of_flat_tree, gd->bd);
-
-	if (ret) {
-		printf("Failed to add board information to FDT: %s\n",
-			fdt_strerror(ret));
-		return ret;	/* FDT_ERR_... */
-	}
-#endif
 
 	debug("## Transferring control to Linux (at address %08lx) ...\n",
 	       (ulong) kernel_entry);
@@ -231,6 +221,17 @@ static int bootm_linux_fdt(int machid, bootm_headers_t *images)
 	fdt_fixup_ethernet(*of_flat_tree);
 
 	fdt_initrd(*of_flat_tree, *initrd_start, *initrd_end, 1);
+
+#ifdef CONFIG_OF_BOARD_SETUP
+	/* Call the board-specific fixup routine */
+	ret = ft_board_setup(*of_flat_tree, gd->bd);
+
+	if (ret) {
+		printf("Failed to add board information to FDT: %s\n",
+			fdt_strerror(ret));
+		return ret;	/* FDT_ERR_... */
+	}
+#endif
 
 	announce_and_cleanup();
 
