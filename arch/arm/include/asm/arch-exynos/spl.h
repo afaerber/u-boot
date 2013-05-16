@@ -26,6 +26,11 @@
 #include <asm/arch-exynos/cpu.h>
 #include <asm/arch-exynos5/dmc.h>
 
+enum rtc_t {
+	SPL_RTC_TYPE_UNKNOWN,
+	SPL_RTC_TYPE_S5M8767
+};
+
 /* Parameters of early board initialization in SPL */
 struct spl_machine_param {
 	/* Add fields as and when required */
@@ -53,6 +58,7 @@ struct spl_machine_param {
 	 * M		Memory Manufacturer name
 	 * w		Bad Wake GPIO number
 	 * z		compression type
+	 * c		rtc (clock) type
 	 * \0		termination
 	 */
 	char		params[16];	/* Length must be word-aligned */
@@ -75,6 +81,7 @@ struct spl_machine_param {
 	enum mem_manuf	mem_manuf;	/* Memory Manufacturer */
 	u32		bad_wake_gpio;	/* If high at wake time disallow wake */
 	enum compress_t	compress_type;	/* Compression type */
+	enum rtc_t	rtc_type;	/* Type of RTC */
 } __attribute__((__packed__));
 
 /**

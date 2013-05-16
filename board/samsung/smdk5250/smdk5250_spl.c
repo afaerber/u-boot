@@ -39,7 +39,7 @@ static struct spl_machine_param machine_param
 		__attribute__((section(".machine_param"))) = {
 	.signature	= SIGNATURE,
 	.version	= 1,
-	.params		= "vmubfasirMwz",
+	.params		= "vmubfasirMwzc",
 	.size		= sizeof(machine_param),
 
 	.mem_iv_size	= 0x1f,
@@ -64,6 +64,7 @@ static struct spl_machine_param machine_param
 	.mem_manuf	= MEM_MANUF_SAMSUNG,
 	.bad_wake_gpio	= GPIO_Y10,
 	.compress_type	= UBOOT_COMPRESS_NONE,
+	.rtc_type	= SPL_RTC_TYPE_UNKNOWN,
 };
 
 struct spl_machine_param *spl_get_machine_params(void)
