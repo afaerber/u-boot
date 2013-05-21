@@ -54,13 +54,13 @@
 		rw-a-boot {
 			/* Alignment: no requirement (yet). */
 			label = "fw-main-a";
-			reg = <0x00202000 0x000ebf00>;
+			reg = <0x00202000 0x000edf00>;
 			type = "blob boot,dtb,ecbin";
 		};
 		rw-a-firmware-id {
 			/* Alignment: no requirement. */
 			label = "rw-fwid-a";
-			reg = <0x002edf00 0x00000100>;
+			reg = <0x002eff00 0x00000100>;
 			read-only;
 			type = "blobstring fwid";
 		};
@@ -69,14 +69,14 @@
 		rw-b {
 			label = "rw-section-b";
 			/* Alignment: 4k (for updating) */
-			reg = <0x002fe000 0x000ee000>;
+			reg = <0x00300000 0x000f0000>;
 			block-offset = /bits/ 64 <0x00084400>;
 		};
 		rw-b-vblock {
 			label = "vblock-b";
 			/* Alignment: 4k (for updating) and must be in start of
 			 * each RW_SECTION. */
-			reg = <0x002fe000 0x00002000>;
+			reg = <0x00300000 0x00002000>;
 			type = "keyblock boot,dtb";
 			keyblock = "firmware.keyblock";
 			signprivate = "firmware_data_key.vbprivk";
@@ -87,13 +87,13 @@
 		rw-b-boot {
 			label = "fw-main-b";
 			/* Alignment: no requirement (yet). */
-			reg = <0x00300000 0x000ebf00>;
+			reg = <0x00302000 0x000edf00>;
 			type = "blob boot,dtb,ecbin";
 		};
 		rw-b-firmware-id {
 			label = "rw-fwid-b";
 			/* Alignment: no requirement. */
-			reg = <0x003ebf00 0x00000100>;
+			reg = <0x003eff00 0x00000100>;
 			read-only;
 			type = "blobstring fwid";
 		};
@@ -102,7 +102,7 @@
 		rw-vpd {
 			label = "rw-vpd";
 			/* Alignment: 4k (for updating) */
-			reg = <0x003ec000 0x00008000>;
+			reg = <0x003f0000 0x00008000>;
 			type = "wiped";
 			wipe-value = [ff];
 		};
@@ -112,13 +112,13 @@
 			/* Alignment: 4k (for updating).
 			 * Anything in this range may be updated in recovery. */
 			label = "rw-shared";
-			reg = <0x003f4000 0x00004000>;
+			reg = <0x003f8000 0x00004000>;
 		};
 		shared-data {
 			label = "shared-data";
 			/* Alignment: 4k (for random read/write).
 			 * RW firmware can put calibration data here. */
-			reg = <0x003f4000 0x00004000>;
+			reg = <0x003f8000 0x00004000>;
 			type = "wiped";
 			wipe-value = [00];
 		};
@@ -126,14 +126,7 @@
 		private-section {
 			/* Anything in this range will never be updated */
 			label = "rw-private";
-			reg = <0x003f8000 0x00008000>;
-		};
-		rw-elog {
-			label = "rw-elog";
-			/* Alignment: 4k (for updating) */
-			reg = <0x003f8000 0x00004000>;
-			type = "wiped";
-			wipe-value = [ff];
+			reg = <0x003fc000 0x00004000>;
 		};
 		rw-environment {
 			label = "rw-environment";
