@@ -65,6 +65,35 @@
 			type = "blobstring fwid";
 		};
 
+		/* ---- Section: Rewritable shared 16 KB---- */
+		shared-section {
+			/* Alignment: 4k (for updating).
+			 * Anything in this range may be updated in recovery. */
+			label = "rw-shared";
+			reg = <0x002f0000 0x00004000>;
+		};
+		shared-data {
+			label = "shared-data";
+			/* Alignment: 4k (for random read/write).
+			 * Currently no one is using this section.
+			 * RW firmware can put calibration data here. */
+			reg = <0x002f0000 0x00004000>;
+			type = "wiped";
+			wipe-value = [00];
+		};
+
+		/*
+		 * This space is currently unused and reserved for future
+		 * extensions. cros_bundle_firmware dislikes holes in the
+		 * FMAP, so we cover all empty space here.
+		 */
+		rw-unused {
+			label = "rw-unused";
+			reg = <0x002f4000 0x0000c000>;
+			type = "wiped";
+			wipe-value = [ff];
+		};
+
 		/* ---- Section: Rewritable slot B ---- */
 		rw-b {
 			label = "rw-section-b";
@@ -107,27 +136,23 @@
 			wipe-value = [ff];
 		};
 
-		/* ---- Section: Rewritable shared 16 KB---- */
-		shared-section {
-			/* Alignment: 4k (for updating).
-			 * Anything in this range may be updated in recovery. */
-			label = "rw-shared";
-			reg = <0x003f8000 0x00004000>;
-		};
-		shared-data {
-			label = "shared-data";
-			/* Alignment: 4k (for random read/write).
-			 * RW firmware can put calibration data here. */
-			reg = <0x003f8000 0x00004000>;
-			type = "wiped";
-			wipe-value = [00];
-		};
-		/* ---- Section: Rewritable private 16 KB---- */
+		/* ---- Section: Rewritable private 32 KB---- */
 		private-section {
 			/* Anything in this range will never be updated */
 			label = "rw-private";
-			reg = <0x003fc000 0x00004000>;
+			reg = <0x003f8000 0x00008000>;
 		};
+
+		rw-elog {
+			label = "rw-elog";
+			/* Alignment: 4k, and must be followed by rw-environment
+			 * section to help SPL finding ELOG section --
+			 * check CONFIG_ELOG_OFFSET */
+			reg = <0x003f8000 0x00004000>;
+			type = "wiped";
+			wipe-value = [ff];
+		};
+
 		rw-environment {
 			label = "rw-environment";
 			/* Alignment: 4k, and must occupy bottom of U-Boot
