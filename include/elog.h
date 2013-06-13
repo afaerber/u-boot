@@ -145,6 +145,10 @@ struct elog_event_data_me_extended {
 /* EC Shutdown Reason */
 #define ELOG_TYPE_EC_SHUTDOWN             0xa5
 
+/* ARM/generic versions of sleep/wake */
+#define ELOG_TYPE_SLEEP                   0xa7
+#define ELOG_TYPE_WAKE                    0xa8
+
 /* ELOG header */
 struct elog_header {
 	u32 magic;

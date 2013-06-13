@@ -379,7 +379,7 @@ static void exynos_log_wake_event(void)
 	/* offset is relative to the log, we need relative to flash */
 	offset += CONFIG_ELOG_OFFSET;
 
-	elog_prepare_event(&event, ELOG_TYPE_ACPI_WAKE, &sleep_type, 1);
+	elog_prepare_event(&event, ELOG_TYPE_WAKE, &sleep_type, 1);
 	exynos_spi_write(offset, sizeof(event), (uintptr_t)&event);
 }
 
