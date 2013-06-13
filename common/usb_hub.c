@@ -125,8 +125,8 @@ static void usb_hub_power_on(struct usb_hub_device *hub)
 		USB_HUB_PRINTF("port %d returns %lX\n", i + 1, dev->status);
 	}
 
-	/* Wait at least 100 msec for power to become stable */
-	mdelay(max(pgood_delay, (unsigned)100));
+	/* Wait at least 550 msec for power to become stable */
+	mdelay(max(pgood_delay, (unsigned)550));
 }
 
 void usb_hub_reset(void)
