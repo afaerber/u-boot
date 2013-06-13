@@ -89,8 +89,10 @@ static u8 elog_checksum_event(struct event_header *event)
 static void elog_fill_timestamp(struct event_header *event)
 {
 	struct rtc_time time;
+	int res;
 
-	rtc_get(&time);
+	res = rtc_get(&time);
+
 	event->second = bin2bcd(time.tm_sec);
 	event->minute = bin2bcd(time.tm_min);
 	event->hour   = bin2bcd(time.tm_hour);
@@ -98,9 +100,10 @@ static void elog_fill_timestamp(struct event_header *event)
 	event->month  = bin2bcd(time.tm_mon);
 	event->year   = bin2bcd(time.tm_year % 100);
 
-	/* Basic sanity check of expected ranges */
-	if (event->month > 0x12 || event->day > 0x31 || event->hour > 0x23 ||
-	    event->minute > 0x59 || event->second > 0x59) {
+	/* Basic sanity check whether rtc_get worked and of expected ranges */
+	if (res || event->month > 0x12 || event->day > 0x31 ||
+	    event->hour > 0x23 || event->minute > 0x59 ||
+	    event->second > 0x59) {
 		event->year   = 0;
 		event->month  = 0;
 		event->day    = 0;
