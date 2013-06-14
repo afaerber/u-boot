@@ -768,7 +768,7 @@ static void ps8622_init(void)
 	ps8622_i2c_write(0x01, 0xcb, 0x05); /* DPCD40B, Initial Code minor
 					     * revision '05' */
 	ps8622_i2c_write(0x01, 0xa5, 0xa0); /* DPCD720, Select internal PWM */
-	ps8622_i2c_write(0x01, 0xa7, 0xff); /* FFh for 100% PWM of brightness,
+	ps8622_i2c_write(0x01, 0xa7, 0x00); /* FFh for 100% PWM of brightness,
 					     * 0h for 0% brightness */
 	ps8622_i2c_write(0x01, 0xcc, 0x13); /* Set LVDS output as 6bit-VESA
 					     * mapping, single LVDS channel */
@@ -894,11 +894,18 @@ int board_dp_backlight_pwm(const void *blob, unsigned *wait_ms)
 
 int board_dp_backlight_en(const void *blob, unsigned *wait_ms)
 {
+	int res;
+
+	/* try to set the backlight in the bridge registers */
+	res = board_dp_set_backlight(100);
+
 	/*
-	 * Configure GPIO for LCD_BL_EN
+	 * if we have no Parade bridge, we might be controlling the backlight
+	 * with the LCD_BL_EN GPIO.
 	 * TODO(hatim.rv@samsung.com): Move to FDT
 	 */
-	gpio_direction_output(GPIO_X30, 1);
+	if (res == -ENODEV)
+		gpio_direction_output(GPIO_X30, 1);
 	/* We're done, no more delays! */
 	*wait_ms = 0;
 	return 0;
