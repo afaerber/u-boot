@@ -727,6 +727,49 @@ enum lightbar_command {
 };
 
 /*****************************************************************************/
+/* LED control commands */
+
+#define EC_CMD_LED_CONTROL 0x29
+
+enum ec_led_id {
+	EC_LED_ID_BATTERY_LED = 0,
+	EC_LED_ID_POWER_BUTTON_LED,
+	EC_LED_ID_ADAPTER_LED,
+};
+
+/* LED control flags */
+#define EC_LED_FLAGS_QUERY (1 << 0) /* Query LED capability only */
+#define EC_LED_FLAGS_AUTO  (1 << 1) /* Switch LED back to automatic control */
+
+enum ec_led_colors {
+	EC_LED_COLOR_RED = 0,
+	EC_LED_COLOR_GREEN,
+	EC_LED_COLOR_BLUE,
+	EC_LED_COLOR_YELLOW,
+	EC_LED_COLOR_WHITE,
+
+	EC_LED_COLOR_COUNT
+};
+
+struct ec_params_led_control {
+	uint8_t led_id;     /* Which LED to control */
+	uint8_t flags;      /* Control flags */
+
+	uint8_t brightness[EC_LED_COLOR_COUNT];
+} __packed;
+
+struct ec_response_led_control {
+	/*
+	 * Available brightness value range.
+	 *
+	 * Range 0 means color channel not present.
+	 * Range 1 means on/off control.
+	 * Other values means the LED is control by PWM.
+	 */
+	uint8_t brightness_range[EC_LED_COLOR_COUNT];
+} __packed;
+
+/*****************************************************************************/
 /* Verified boot commands */
 
 /*
@@ -1242,7 +1285,7 @@ struct ec_response_ldo_get {
 } __packed;
 
 /*****************************************************************************/
-/* Power info. */
+/* Power related. */
 
 /*
  * Get power info.
@@ -1255,6 +1298,15 @@ struct ec_response_power_info {
 	uint16_t voltage_system;
 	uint16_t current_system;
 	uint16_t usb_current_limit;
+} __packed;
+
+/*
+ * Set the delay before the EC hibernates.
+ */
+#define EC_CMD_SET_HIB_DELAY 0x9e
+
+struct ec_params_hib_delay {
+	uint32_t delay_secs; /* 0 to disable */
 } __packed;
 
 /*****************************************************************************/
@@ -1273,7 +1325,16 @@ struct ec_response_power_info {
 #define EC_CMD_CHARGE_CURRENT_LIMIT 0xa1
 
 struct ec_params_current_limit {
-	uint32_t limit;
+	uint32_t limit; /* in mA */
+} __packed;
+
+/*
+ * Set maximum external power current.
+ */
+#define EC_CMD_EXT_POWER_CURRENT_LIMIT 0xa2
+
+struct ec_params_ext_power_current_limit {
+	uint32_t limit; /* in mA */
 } __packed;
 
 /*****************************************************************************/

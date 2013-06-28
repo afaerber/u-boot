@@ -461,4 +461,13 @@ int mkbp_get_power_info(struct mkbp_dev *dev,
  * @return 0 if ok, -1 on error
  */
 int mkbp_read_battery_reg(struct mkbp_dev *dev, uint8_t index, uint16_t *value);
+
+/**
+ * Set EC auto hibernate delay.
+ *
+ * @param dev		MKBP device
+ * @param delay		Delay in seconds
+ * @return 0 if ok, -1 on error
+ */
+int mkbp_set_hib_delay(struct mkbp_dev *dev, uint32_t delay);
 #endif

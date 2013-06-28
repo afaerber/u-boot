@@ -828,6 +828,18 @@ int mkbp_read_battery_reg(struct mkbp_dev *dev, uint8_t index, uint16_t *value)
 	return 0;
 }
 
+int mkbp_set_hib_delay(struct mkbp_dev *dev, uint32_t delay)
+{
+	struct ec_params_hib_delay params;
+
+	params.delay_secs = delay;
+
+	if (ec_command(dev, EC_CMD_SET_HIB_DELAY, 0,
+		       &params, sizeof(params), NULL, 0))
+		return -1;
+	return 0;
+}
+
 /**
  * Decode MBKP details from the device tree and allocate a suitable device.
  *
