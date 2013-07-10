@@ -157,7 +157,8 @@ int ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size,
 	dmc_config_prech(mem, dmc);
 
 	/* Send NOP, MRS and ZQINIT commands */
-	dmc_config_mrs(mem, dmc);
+	if (mem_reset)
+		dmc_config_mrs(mem, dmc);
 
 	if (mem->gate_leveling_enable) {
 		val = PHY_CON0_RESET_VAL;
