@@ -1247,7 +1247,7 @@ int board_late_init(void)
 	/*
 	 * Disable EC standby mode for early stage boards.
 	 */
-	if (board_get_revision() <= 8) {
+	if (board_get_revision() <= 12) {
 		debug("%s: disabling EC standby mode\n", __func__);
 		mkbp_set_hib_delay(board_get_mkbp_dev(), 0);
 	}
