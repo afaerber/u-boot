@@ -110,6 +110,7 @@ int usb_get_port_status(struct usb_device *dev, int port, void *data)
 			data, sizeof(struct usb_hub_status), USB_CNTL_TIMEOUT);
 }
 
+unsigned int usb_hub_power_on_max_delay = 250;
 
 static void usb_hub_power_on(struct usb_hub_device *hub)
 {
@@ -125,8 +126,9 @@ static void usb_hub_power_on(struct usb_hub_device *hub)
 		USB_HUB_PRINTF("port %d returns %lX\n", i + 1, dev->status);
 	}
 
-	/* Wait at least 550 msec for power to become stable */
-	mdelay(max(pgood_delay, (unsigned)550));
+        printf("delay for %d msec\n", usb_hub_power_on_max_delay);
+	/* Wait at least max_delay msec for power to become stable */
+	mdelay(max(pgood_delay, usb_hub_power_on_max_delay));
 }
 
 void usb_hub_reset(void)
