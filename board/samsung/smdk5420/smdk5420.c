@@ -360,7 +360,7 @@ int board_late_init(void)
 	if (second_boot_info == 1) {
 		printf("###Recovery Mode###\n");
 		writel(0x0, CONFIG_SECONDARY_BOOT_INFORM_BASE);
-		setenv("bootcmd", CONFIG_BOOTCOMMAND2);
+		run_command(CONFIG_BOOTCOMMAND2, NULL);
 	}
 #endif
 
