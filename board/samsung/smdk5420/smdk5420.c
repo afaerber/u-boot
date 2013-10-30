@@ -227,7 +227,11 @@ int board_eth_init(bd_t *bis)
 #ifdef CONFIG_DISPLAY_BOARDINFO
 int checkboard(void)
 {
+#ifdef CONFIG_MACH_ARNDALE_OCTA
+	printf("\nBoard: ARNDALE OCTA\n");
+#else
 	printf("\nBoard: SMDK5420\n");
+#endif
 
 	return 0;
 }
