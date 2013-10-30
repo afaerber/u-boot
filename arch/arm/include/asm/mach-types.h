@@ -1110,6 +1110,7 @@ extern unsigned int __machine_arch_type;
 #define MACH_TYPE_SMDK5410             4151
 #define MACH_TYPE_SMDK5420             8002
 #define MACH_TYPE_OMAP5_SEVM           3777
+#define MACH_TYPE_ARNDALE              4274
 
 #ifdef CONFIG_ARCH_EBSA110
 # ifdef machine_arch_type
