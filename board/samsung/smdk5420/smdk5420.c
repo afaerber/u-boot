@@ -354,13 +354,27 @@ int board_late_init(void)
 		}
 	}
 #endif
+#ifdef CONFIG_MACH_ARNDALE_OCTA
+#ifdef CONFIG_BOOTCMD_NORMAL
+	setenv("bootcmd_normal", CONFIG_BOOTCMD_NORMAL);
+#endif
+#ifdef CONFIG_BOOTCMD_EXTEND
+	setenv("bootcmd_extend", CONFIG_BOOTCMD_EXTEND);
+#endif
+#endif
 #ifdef CONFIG_RECOVERY_MODE
 	u32 second_boot_info = readl(CONFIG_SECONDARY_BOOT_INFORM_BASE);
 
 	if (second_boot_info == 1) {
 		printf("###Recovery Mode###\n");
 		writel(0x0, CONFIG_SECONDARY_BOOT_INFORM_BASE);
+#ifdef CONFIG_MACH_ARNDALE_OCTA
+		run_command(CONFIG_BOOTCOMMAND_ERASE, NULL);
+		run_command(CONFIG_BOOTCOMMAND_FUSE_BOOT, NULL);
+		//run_command(CONFIG_BOOTCOMMAND_PARTITION, NULL);
+#else
 		run_command(CONFIG_BOOTCOMMAND2, NULL);
+#endif
 	}
 #endif
 

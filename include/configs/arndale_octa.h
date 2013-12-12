@@ -244,7 +244,32 @@
 #define SDMMC_DEV_OFFSET			0x00000000
 #define EMMC_DEV_OFFSET				0x00000014
 
-#define CONFIG_BOOTCOMMAND	"movi read kernel 0 20008000;movi read rootfs 0 21000000 100000;bootz 20008000 21000000"
+#define CONFIG_BOOTCOMMAND	"run bootcmd_normal\;run bootcmd_extend"
+#define CONFIG_BOOTCMD_NORMAL	"movi read kernel 0 20008000;movi read rootfs 0 21000000 100000;bootz 20008000 21000000"
+#define CONFIG_BOOTCMD_EXTEND	"mmc read 1 20008000 7800 8; source 20008000"
+
+#define CONFIG_BOOTCOMMAND_ERASE \
+		"mmc erase boot 0 0 4000;" \
+		"mmc erase user 0 0 40000000;"
+
+#define CONFIG_BOOTCOMMAND_FUSE_BOOT	\
+		"emmc open 0;" \
+		"movi r f 1 40000000;movi w z f 0 40000000;" \
+		"movi r b 1 40000000;movi w z b 0 40000000;" \
+		"movi r u 1 40000000;movi w z u 0 40000000;" \
+		"movi r t 1 40000000;movi w z t 0 40000000;" \
+		"emmc close 0;"
+
+#define CONFIG_BOOTCOMMAND_PARTITION	\
+		"fdisk -c 0 520 2020 520;" \
+		"fatformat mmc 0:1;" \
+		"ext3format mmc 0:2;" \
+		"ext3format mmc 0:3;" \
+		"ext3format mmc 0:4;"
+
+#define CONFIG_FACTORY_RESET_BOOTCOMMAND	\
+                "ext3format mmc 0:3;ext3format mmc 0:4;" \
+                CONFIG_BOOTCMD_NORMAL
 
 #ifdef CONFIG_RAMDUMP_MODE
 #define CONFIG_BOOTCOMMAND_RAMDUMP	"fastboot"
