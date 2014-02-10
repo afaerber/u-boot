@@ -49,6 +49,7 @@
 DECLARE_GLOBAL_DATA_PTR;
 unsigned int pmic;
 unsigned int nr_dram_banks = 0;
+unsigned int OmPin;
 
 static int init_nr_dram_banks(void)
 {
@@ -113,7 +114,6 @@ static void display_pmic_info(void)
 static void display_boot_device_info(void)
 {
 	struct exynos5_power *pmu = (struct exynos5_power *)EXYNOS5_POWER_BASE;
-	int OmPin;
 
 	OmPin = readl(&pmu->inform3);
 
@@ -241,7 +241,7 @@ int checkboard(void)
 int board_mmc_init(bd_t *bis)
 {
 	struct exynos5_power *pmu = (struct exynos5_power *)EXYNOS5_POWER_BASE;
-	int err, OmPin;
+	int err;
 
 	OmPin = readl(&pmu->inform3);
 
@@ -361,6 +361,21 @@ int board_late_init(void)
 #ifdef CONFIG_BOOTCMD_EXTEND
 	setenv("bootcmd_extend", CONFIG_BOOTCMD_EXTEND);
 #endif
+#ifdef CONFIG_BOOTCMD_EXTEND_SD
+	setenv("bootcmd_extend_sd", CONFIG_BOOTCMD_EXTEND_SDBOOT);
+#endif
+	int *GPX2DAT = 0x13400C44;
+	if ((*GPX2DAT & 0x80) == 0) {
+		udelay(DEBOUNCE_DELAY);
+		if ((*GPX2DAT & 0x80) == 0) {
+			udelay(DEBOUNCE_DELAY);
+			if (OmPin == BOOT_MMCSD) {
+				run_command(CONFIG_BOOTCOMMAND_FUSE_SDBOOT, NULL);
+				run_command("run bootcmd_extend_sd", NULL);
+			} else
+				run_command("run bootcmd_extend", NULL);
+		}
+	}
 #endif
 #ifdef CONFIG_RECOVERY_MODE
 	u32 second_boot_info = readl(CONFIG_SECONDARY_BOOT_INFORM_BASE);

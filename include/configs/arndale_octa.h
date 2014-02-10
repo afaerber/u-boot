@@ -247,6 +247,7 @@
 #define CONFIG_BOOTCOMMAND	"run bootcmd_normal\;run bootcmd_extend"
 #define CONFIG_BOOTCMD_NORMAL	"movi read kernel 0 20008000;movi read rootfs 0 21000000 100000;bootz 20008000 21000000"
 #define CONFIG_BOOTCMD_EXTEND	"mmc read 1 20008000 7800 8; source 20008000"
+#define CONFIG_BOOTCMD_EXTEND_SDBOOT "mmc read 0 20008000 7800 8; source 20008000"
 
 #define CONFIG_BOOTCOMMAND_ERASE \
 		"mmc erase boot 0 0 4000;" \
@@ -259,6 +260,13 @@
 		"movi r u 1 40000000;movi w z u 0 40000000;" \
 		"movi r t 1 40000000;movi w z t 0 40000000;" \
 		"emmc close 0;"
+#define CONFIG_BOOTCOMMAND_FUSE_SDBOOT	\
+		"emmc open 1;" \
+		"movi r f 0 40000000;movi w z f 1 40000000;" \
+		"movi r b 0 40000000;movi w z b 1 40000000;" \
+		"movi r u 0 40000000;movi w z u 1 40000000;" \
+		"movi r t 0 40000000;movi w z t 1 40000000;" \
+		"emmc close 1;"
 
 #define CONFIG_BOOTCOMMAND_PARTITION	\
 		"fdisk -c 0 520 2020 520;" \
