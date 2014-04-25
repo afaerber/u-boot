@@ -385,7 +385,7 @@
 #endif /*CONFIG_CMD_NET*/
 
 /* Disable devicetree support */
-/* #define CONFIG_OF_LIBFDT */
+#define CONFIG_OF_LIBFDT
 
 /* Base address for secondary boot information */
 #define CONFIG_SECONDARY_BOOT_INFORM_BASE	(CONFIG_SYS_TEXT_BASE - 0x8)
