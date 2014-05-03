@@ -48,7 +48,7 @@
  * - debug and earlyprintk: easier to debug; they could be removed later
  */
 #define CONFIG_DIRECT_BOOTARGS \
-	"console=ttySAC3," STRINGIFY(CONFIG_BAUDRATE) " debug earlyprintk"
+	"console=tty1 debug earlyprintk clk_ignore_unused"
 
 /* Standard input, output and error device of U-Boot console. */
 #define CONFIG_STD_DEVICES_SETTINGS 	EXYNOS_DEVICE_SETTINGS
@@ -70,15 +70,15 @@
 #endif
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	EXYNOS_DEVICE_SETTINGS \
-	CONFIG_CHROMEOS_EXTRA_ENV_SETTINGS \
-	CONFIG_CHROMEOS_SD_TO_SPI \
-	"dev_extras=daisy\0"
+	"boot_usb_script=ext2load usb 0:2 ${loadaddr} boot.scr; " \
+		"source ${loadaddr}\0" \
+	"bootdelay=3\0"
 
 /* Replace default CONFIG_BOOTCOMMAND */
 #ifdef CONFIG_BOOTCOMMAND
 #undef CONFIG_BOOTCOMMAND
 #endif
-#define CONFIG_BOOTCOMMAND CONFIG_NON_VERIFIED_BOOTCOMMAND
+#define CONFIG_BOOTCOMMAND "usb reset; run boot_usb_script"
 
 /* Enable splash screens */
 #define CONFIG_CROS_SPLASH
