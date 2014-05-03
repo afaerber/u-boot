@@ -10,7 +10,7 @@
 #include <configs/smdk5250.h>
 
 #undef CONFIG_DEFAULT_DEVICE_TREE
-#define CONFIG_DEFAULT_DEVICE_TREE      exynos5250-daisy
+#define CONFIG_DEFAULT_DEVICE_TREE      exynos5250-spring
 
 /* Generally verified boot needs more heap space */
 #undef CONFIG_SYS_MALLOC_LEN
