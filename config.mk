@@ -244,7 +244,7 @@ ifdef CONFIG_CHROMEOS
 ifdef VBOOT_SOURCE
 CPPFLAGS += -I$(VBOOT_SOURCE)/firmware/include
 else
-CPPFLAGS += $(VBOOT)/include)
+CPPFLAGS += $(VBOOT)/include
 endif
 endif
 
