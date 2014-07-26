@@ -34,8 +34,6 @@ int board_use_usb_keyboard(int boot_mode)
 }
 #endif
 
-extern unsigned int usb_hub_power_on_max_delay;
-
 static int boot_device_usb_start(uint32_t disk_flags)
 {
 	int enumerate = 1;
@@ -56,7 +54,6 @@ static int boot_device_usb_start(uint32_t disk_flags)
 		 * We should stop all USB devices first. Otherwise we can't
 		 * detect any new devices.
 		 */
-	again:
 		usb_stop();
 
 		if (usb_init() >= 0) {
@@ -64,14 +61,7 @@ static int boot_device_usb_start(uint32_t disk_flags)
 			if (board_use_usb_keyboard(FIRMWARE_TYPE_RECOVERY))
 				drv_usb_kbd_init();
 #endif
-			if (usb_stor_scan(/*mode=*/1) < 0) {
-				/* Double the delay until we find some
-				   usb storage, or the delay is larger
-				   than 10 seconds. */
-				usb_hub_power_on_max_delay *= 2;
-				if (usb_hub_power_on_max_delay <= 10000)
-					goto again;
-			}
+			usb_stor_scan(/*mode=*/1);
 			is_enumerated = 1;
 		}
 	}
