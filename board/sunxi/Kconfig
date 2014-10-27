@@ -26,6 +26,10 @@ config MACH_SUN8I
 	bool "sun8i (Allwinner A23)"
 	select CPU_V7
 
+config MACH_SUN9I
+	bool "sun9i (Allwinner A80)"
+	select CPU_V7
+
 endchoice
 
 config SYS_CONFIG_NAME
@@ -35,6 +39,7 @@ config SYS_CONFIG_NAME
 	default "sun6i" if MACH_SUN6I
 	default "sun7i" if MACH_SUN7I
 	default "sun8i" if MACH_SUN8I
+	default "sun9i" if MACH_SUN9I
 
 choice
 	prompt "Board"
