@@ -140,6 +140,10 @@ config TARGET_R7DONGLE
 	bool "R7DONGLE"
 	depends on MACH_SUN5I
 
+config TARGET_OPTIMUSBOARD
+	bool "OPTIMUSBOARD"
+	depends on MACH_SUN9I
+
 endchoice
 
 config SYS_BOARD
