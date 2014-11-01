@@ -170,6 +170,9 @@ enum sunxi_gpio_number {
 #define SUN6I_GPH20_UART0_TX	2
 #define SUN6I_GPH21_UART0_RX	2
 
+#define SUN9I_GPH12_UART0_TX	2
+#define SUN9I_GPH13_UART0_RX	2
+
 #define SUN4I_GPI4_SDC3		2
 
 #define SUN8I_GPL2_R_UART_TX	2
