@@ -15,15 +15,17 @@ ifdef CONFIG_CPU_V7M
 obj-y	+= vectors_m.o
 else
 obj-y	+= vectors.o
-endif
 obj-y	+= crt0.o
+endif
 endif
 
 ifndef CONFIG_SPL_BUILD
 ifdef CONFIG_ARM64
 obj-y	+= relocate_64.o
 else
+ifndef CONFIG_CPU_V7M
 obj-y	+= relocate.o
+endif
 endif
 ifndef CONFIG_SYS_GENERIC_BOARD
 obj-y	+= board.o

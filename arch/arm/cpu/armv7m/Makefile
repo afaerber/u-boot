@@ -5,3 +5,5 @@
 #
 
 extra-y	:= start.o
+
+obj-y += cpu.o
