@@ -807,6 +807,10 @@ config ARCH_UNIPHIER
 	select SUPPORT_SPL
 	select OF_CONTROL if !SPL_BUILD
 
+config ARCH_STM32
+	bool "ST STM32 platform"
+	select CPU_V7M
+
 endchoice
 
 source "arch/arm/cpu/arm926ejs/davinci/Kconfig"
@@ -842,6 +846,8 @@ source "arch/arm/cpu/arm926ejs/versatile/Kconfig"
 source "arch/arm/cpu/armv7/zynq/Kconfig"
 
 source "arch/arm/cpu/armv7/Kconfig"
+
+source "arch/arm/cpu/armv7m/stm32/Kconfig"
 
 source "board/aristainetos/Kconfig"
 source "board/BuR/kwb/Kconfig"
