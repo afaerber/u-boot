@@ -25,6 +25,7 @@
 
 #define CONFIG_SYS_NO_FLASH
 
+#define CONFIG_STM32_USART
 #define CONFIG_BAUDRATE			115200
 
 /*
