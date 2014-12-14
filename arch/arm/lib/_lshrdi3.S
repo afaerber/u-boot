@@ -4,6 +4,8 @@
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
+#include <asm/unified.h>
+
 #ifdef __ARMEB__
 #define al r1
 #define ah r0
@@ -21,6 +23,8 @@ __aeabi_llsr:
 	rsb	ip, r2, #32
 	movmi	al, al, lsr r2
 	movpl	al, ah, lsr r3
-	orrmi	al, al, ah, lsl ip
+ ARM(	orrmi	al, al, ah, lsl ip	)
+ THUMB(	lslmi	r3, ah, ip		)
+ THUMB(	orrmi	al, al, r3		)
 	mov	ah, ah, lsr r2
 	mov	pc, lr

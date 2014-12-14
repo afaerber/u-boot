@@ -1,3 +1,5 @@
+#include <asm/unified.h>
+
 /* # 1 "libgcc1.S" */
 @ libgcc1 routines for ARM cpu.
 @ Division routines, written by Richard Earnshaw, (rearnsha@armltd.co.uk)

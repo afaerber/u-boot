@@ -1,3 +1,5 @@
+#include <asm/unified.h>
+
 .macro ARM_DIV_BODY dividend, divisor, result, curbit
 
 #if __LINUX_ARM_ARCH__ >= 5
