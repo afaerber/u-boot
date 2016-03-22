@@ -175,10 +175,11 @@ uint64_t meson_trustzone_efuse_check(unsigned char *addr)
 
 void debug_efuse_cmd(unsigned long cmd)
 {
+	register uint64_t x0 asm("x0") = cmd;
 	asm volatile(
 		__asmeq("%0", "x0")
 		"smc    #0\n"
-		: : "r" (cmd));
+		: : "r" (x0));
 }
 
 
@@ -211,11 +212,13 @@ void aml_set_jtag_state(unsigned state, unsigned select)
 		command = JTAG_OFF;
 	asm __volatile__("" : : : "memory");
 
+	register uint64_t x0 asm("x0") = command;
+	register uint64_t x1 asm("x1") = select;
 	asm volatile(
 		__asmeq("%0", "x0")
 		__asmeq("%1", "x1")
 		"smc    #0\n"
-		: : "r" (command), "r"(select));
+		: : "r" (x0), "r"(x1));
 }
 
 unsigned aml_get_reboot_reason(void)
