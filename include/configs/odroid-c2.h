@@ -16,6 +16,10 @@
 
 #define MESON_FDTFILE_SETTING "fdtfile=amlogic/meson-gxbb-odroidc2.dtb\0"
 
+#ifdef CONFIG_DM_MMC
+#define CONFIG_MMC_MESON_SD_PORT	1
+#endif
+
 #include <configs/meson-gxbb-common.h>
 
 #endif /* __CONFIG_H */
