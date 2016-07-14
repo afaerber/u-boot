@@ -1,0 +1,19 @@
+if ROCKCHIP_RK3368
+
+choice
+	prompt "RK3368 board"
+
+config TARGET_GEEKBOX
+	bool "GeekBox"
+
+endchoice
+
+config SYS_SOC
+	default "rockchip"
+
+config SYS_MALLOC_F_LEN
+	default 0x0800
+
+source "board/geekbuying/geekbox/Kconfig"
+
+endif

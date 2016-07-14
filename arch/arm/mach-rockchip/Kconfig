@@ -23,6 +23,11 @@ config ROCKCHIP_RK3288
 	  and video codec support. Peripherals include Gigabit Ethernet,
 	  USB2 host and OTG, SDIO, I2S, UARTs, SPI, I2C and PWMs.
 
+config ROCKCHIP_RK3368
+	bool "Support Rockchip RK3368"
+	select ARM64
+	select SYS_NS16550
+
 config ROCKCHIP_RK3399
 	bool "Support Rockchip RK3399"
 	select ARM64
@@ -47,5 +52,6 @@ config SPL_MMC_SUPPORT
 
 source "arch/arm/mach-rockchip/rk3036/Kconfig"
 source "arch/arm/mach-rockchip/rk3288/Kconfig"
+source "arch/arm/mach-rockchip/rk3368/Kconfig"
 source "arch/arm/mach-rockchip/rk3399/Kconfig"
 endif
