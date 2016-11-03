@@ -20,7 +20,8 @@
 
 /* #define CONFIG_SYS_MEM_TOP_HIDE (128*1024*1024) */
 
-#define MESON_FDTFILE_SETTING
+#define MESON_FDTFILE_SETTING \
+	"ethaddr=20:18:0e:02:5c:5d\0"
 
 #include <configs/meson-gxbb-common.h>
 
