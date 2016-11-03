@@ -10,6 +10,7 @@
 #include <asm/arch/gxbb.h>
 #include <asm/arch/sm.h>
 #include <asm/armv8/mmu.h>
+#include <asm/io.h>
 #include <asm/unaligned.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -34,11 +35,23 @@ int dram_init(void)
 	return 0;
 }
 
+phys_size_t get_effective_memsize(void)
+{
+	phys_size_t size;
+
+	size = readl((0xc8100000 + (0x90 << 2))) >> 16;
+	size <<= 20;
+#ifdef CONFIG_SYS_MEM_TOP_HIDE
+	size -= CONFIG_SYS_MEM_TOP_HIDE;
+#endif
+	return size;
+}
+
 void dram_init_banksize(void)
 {
 	/* Reserve first 16 MiB of RAM for firmware */
 	gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE + (16 * 1024 * 1024);
-	gd->bd->bi_dram[0].size = gd->ram_size - (16 * 1024 * 1024);
+	gd->bd->bi_dram[0].size = get_effective_memsize() - (16 * 1024 * 1024);
 }
 
 void reset_cpu(ulong addr)
