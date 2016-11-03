@@ -20,7 +20,7 @@
 
 #define CONFIG_SYS_MEM_TOP_HIDE (128*1024*1024)
 
-#define MESON_FDTFILE_SETTING "fdtfile=amlogic/meson-gxbb-vega-s95-telos.dtb\0"
+#define MESON_FDTFILE_SETTING
 
 #include <configs/meson-gxbb-common.h>
 

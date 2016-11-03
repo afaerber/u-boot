@@ -16,8 +16,18 @@ int board_init(void)
 	return 0;
 }
 
+static void set_fdtfile(void)
+{
+	if (getenv("fdtfile"))
+		return;
+
+	setenv("fdtfile", "amlogic/meson-gxbb-vega-s95-telos.dtb");
+}
+
 int misc_init_r(void)
 {
+	set_fdtfile();
+
 	/* Set RGMII mode */
 	setbits_le32(GXBB_ETH_REG_0, GXBB_ETH_REG_0_PHY_INTF |
 				     GXBB_ETH_REG_0_TX_PHASE(1) |
