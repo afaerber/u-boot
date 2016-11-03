@@ -40,7 +40,8 @@ dtb-$(CONFIG_ARCH_ROCKCHIP) += \
 	rk3288-popmetal.dtb \
 	rk3399-evb.dtb
 dtb-$(CONFIG_ARCH_MESON) += \
-	meson-gxbb-odroidc2.dtb
+	meson-gxbb-odroidc2.dtb \
+	meson-gxbb-vega-s95-telos.dtb
 dtb-$(CONFIG_TEGRA) += tegra20-harmony.dtb \
 	tegra20-medcom-wide.dtb \
 	tegra20-paz00.dtb \

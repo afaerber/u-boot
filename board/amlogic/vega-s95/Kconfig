@@ -1,0 +1,12 @@
+if TARGET_VEGA_S95
+
+config SYS_BOARD
+	default "vega-s95"
+
+config SYS_VENDOR
+	default "amlogic"
+
+config SYS_CONFIG_NAME
+	default "vega-s95"
+
+endif

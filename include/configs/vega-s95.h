@@ -1,0 +1,27 @@
+/*
+ * Tronsmart Vega S95
+ *
+ * Copyright (c) 2016 Andreas Färber
+ *
+ * Based on ODROID-C2:
+ * (C) Copyright 2016 Beniamino Galvani <b.galvani@gmail.com>
+ *
+ * SPDX-License-Identifier:	GPL-2.0+
+ */
+
+#ifndef __CONFIG_H
+#define __CONFIG_H
+
+#define CONFIG_MISC_INIT_R
+
+/* Serial setup */
+#define CONFIG_CONS_INDEX		0
+#define CONFIG_BAUDRATE			115200
+
+#define CONFIG_SYS_MEM_TOP_HIDE (128*1024*1024)
+
+#define MESON_FDTFILE_SETTING "fdtfile=amlogic/meson-gxbb-vega-s95-telos.dtb\0"
+
+#include <configs/meson-gxbb-common.h>
+
+#endif /* __CONFIG_H */

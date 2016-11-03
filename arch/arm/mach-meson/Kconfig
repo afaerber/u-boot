@@ -18,6 +18,11 @@ config TARGET_ODROID_C2
 	  with 2 GiB of RAM, Gigabit Ethernet, HDMI, 4 USB, micro-SD
 	  slot, eMMC, IR receiver and a 40-pin GPIO header.
 
+config TARGET_VEGA_S95
+	bool "Vega S95"
+	help
+	  Tronsmart Vega S95 is a family of TV box devices.
+
 endif
 
 config SYS_SOC
@@ -27,5 +32,6 @@ config SYS_MALLOC_F_LEN
 	default 0x1000
 
 source "board/amlogic/odroid-c2/Kconfig"
+source "board/amlogic/vega-s95/Kconfig"
 
 endif
