@@ -1,0 +1,35 @@
+if TARGET_JZ4780_CI20
+
+config SYS_BOARD
+	default "ci20"
+
+config SYS_VENDOR
+	default "imgtec"
+
+config SYS_CONFIG_NAME
+	default "ci20"
+
+config SYS_TEXT_BASE
+	default 0x80000000
+
+config JTAG
+	bool
+	default y
+
+config SYS_AUDIO_SPEED
+	int
+	default 768000000
+
+config SYS_EXTAL
+	int
+	default 48000000
+
+config SYS_MEM_DIV
+	int
+	default 3
+
+config SYS_MEM_SPEED
+	int
+	default 1200000000
+
+endif
