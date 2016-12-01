@@ -84,6 +84,12 @@ config ARCH_BMIPS
 	select RAM
 	select SYSRESET
 
+config ARCH_JZ47XX
+	bool "Support Ingenic JZ47xx"
+	select SUPPORT_SPL
+	select OF_CONTROL
+	select DM
+
 config MACH_PIC32
 	bool "Support Microchip PIC32"
 	select OF_CONTROL
@@ -134,6 +140,7 @@ source "board/pb1x00/Kconfig"
 source "board/qemu-mips/Kconfig"
 source "arch/mips/mach-ath79/Kconfig"
 source "arch/mips/mach-bmips/Kconfig"
+source "arch/mips/mach-jz47xx/Kconfig"
 source "arch/mips/mach-pic32/Kconfig"
 
 if MIPS
