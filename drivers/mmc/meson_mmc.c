@@ -45,15 +45,13 @@ static void meson_mmc_config_clock(struct mmc *mmc,
 	writel(meson_mmc_clk, &meson_mmc_reg->gclock);
 }
 
-static void meson_mmc_set_ios(struct mmc *mmc)
+static int meson_mmc_set_ios(struct udevice *dev)
 {
-	struct meson_mmc_platdata *pdata;
-	struct meson_mmc_regs *meson_mmc_reg;
+	struct meson_mmc_priv *priv = dev_get_priv(dev);
+	struct meson_mmc_regs *meson_mmc_reg = priv->sd_emmc_reg;
+	struct mmc *mmc = mmc_get_mmc_dev(dev);
 	unsigned int bus_width;
 	uint32_t meson_mmc_cfg = 0;
-
-	pdata = mmc->priv;
-	meson_mmc_reg = pdata->sd_emmc_reg;
 
 	meson_mmc_config_clock(mmc, meson_mmc_reg);
 
@@ -82,17 +80,10 @@ static void meson_mmc_set_ios(struct mmc *mmc)
 
 	writel(meson_mmc_cfg, &meson_mmc_reg->gcfg);
 
-	return;
-}
-
-static int meson_mmc_init(struct mmc *mmc)
-{
-	mmc_set_clock(mmc, 400000);
-
 	return 0;
 }
 
-static void meson_mmc_setup_cmd(struct mmc *mmc, struct mmc_data *data,
+static void meson_mmc_setup_cmd(struct udevice *dev, struct mmc_data *data,
 				struct mmc_cmd *cmd,
 				struct meson_mmc_regs *meson_mmc_reg)
 {
@@ -135,14 +126,12 @@ static void meson_mmc_setup_cmd(struct mmc *mmc, struct mmc_data *data,
 	return;
 }
 
-static void meson_mmc_setup_addr(struct mmc *mmc, struct mmc_data *data,
+static void meson_mmc_setup_addr(struct udevice *dev, struct mmc_data *data,
 				 struct meson_mmc_regs *meson_mmc_reg)
 {
-	struct meson_mmc_platdata *pdata;
+	struct meson_mmc_priv *priv = dev_get_priv(dev);
 	unsigned int data_size = 0;
 	uint32_t meson_mmc_data_addr = 0;
-
-	pdata = mmc->priv;
 
 	if (data) {
 		data_size = data->blocks * data->blocksize;
@@ -159,11 +148,11 @@ static void meson_mmc_setup_addr(struct mmc *mmc, struct mmc_data *data,
 		}
 
 		if (data->flags == MMC_DATA_WRITE) {
-			pdata->w_buf = calloc(data_size, sizeof(char));
-			memcpy(pdata->w_buf, data->src, data_size);
-			flush_dcache_range((ulong) pdata->w_buf,
-					   (ulong) (pdata->w_buf + data_size));
-			meson_mmc_data_addr = (ulong) pdata->w_buf;
+			priv->w_buf = calloc(data_size, sizeof(char));
+			memcpy(priv->w_buf, data->src, data_size);
+			flush_dcache_range((ulong) priv->w_buf,
+					   (ulong) (priv->w_buf + data_size));
+			meson_mmc_data_addr = (ulong) priv->w_buf;
 		}
 	}
 
@@ -194,19 +183,17 @@ static void meson_mmc_read_response(struct mmc *mmc, struct mmc_data *data,
 	}
 }
 
-static int meson_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
+static int meson_mmc_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
 			      struct mmc_data *data)
 {
-	struct meson_mmc_platdata *pdata;
-	struct meson_mmc_regs *meson_mmc_reg;
+	struct meson_mmc_priv *priv = dev_get_priv(dev);
+	struct meson_mmc_regs *meson_mmc_reg = priv->sd_emmc_reg;
+	struct mmc *mmc = mmc_get_mmc_dev(dev);
 	uint32_t meson_mmc_irq = 0;
 	int ret = 0;
 
-	pdata = mmc->priv;
-	meson_mmc_reg = pdata->sd_emmc_reg;
-
-	meson_mmc_setup_cmd(mmc, data, cmd, meson_mmc_reg);
-	meson_mmc_setup_addr(mmc, data, meson_mmc_reg);
+	meson_mmc_setup_cmd(dev, data, cmd, meson_mmc_reg);
+	meson_mmc_setup_addr(dev, data, meson_mmc_reg);
 
 	writel(SD_IRQ_ALL, &meson_mmc_reg->gstatus);
 	writel(cmd->cmdarg, &meson_mmc_reg->gcmd_arg);
@@ -233,47 +220,44 @@ static int meson_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	meson_mmc_read_response(mmc, data, cmd, meson_mmc_reg);
 
 	if (data && data->flags == MMC_DATA_WRITE)
-		free(pdata->w_buf);
+		free(priv->w_buf);
 
 	if (ret) {
 		if (meson_mmc_irq & STATUS_RESP_TIMEOUT)
-			return TIMEOUT;
+			return -ETIMEDOUT;
 		return ret;
 	}
 
 	return 0;
 }
 
-static const struct mmc_ops meson_mmc_ops = {
+static const struct dm_mmc_ops meson_mmc_ops = {
 	.send_cmd	= meson_mmc_send_cmd,
 	.set_ios	= meson_mmc_set_ios,
-	.init		= meson_mmc_init,
 };
 
-static int meson_mmc_ofdata_to_platdata(struct udevice *dev)
+static int meson_mmc_bind(struct udevice *dev)
 {
 	struct meson_mmc_platdata *pdata = dev->platdata;
+
+	return mmc_bind(dev, &pdata->mmc, &pdata->cfg);
+}
+
+static int meson_mmc_probe(struct udevice *dev)
+{
+	struct meson_mmc_platdata *pdata = dev->platdata;
+	struct meson_mmc_priv *priv = dev_get_priv(dev);
+	struct mmc_uclass_priv *upriv = dev_get_uclass_priv(dev);
+	struct mmc_config *cfg = &pdata->cfg;
 	fdt_addr_t addr;
 
 	addr = dev_get_addr(dev);
 	if (addr == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
-	pdata->sd_emmc_reg = (struct meson_mmc_regs *)addr;
+	priv->sd_emmc_reg = (struct meson_mmc_regs *)addr;
 
-	return 0;
-}
-
-static int meson_mmc_probe(struct udevice *dev)
-{
-	struct meson_mmc_platdata *pdata = dev->platdata;
-	struct mmc_uclass_priv *upriv = dev_get_uclass_priv(dev);
-	struct mmc *mmc;
-	struct mmc_config *cfg;
-
-	cfg = &pdata->cfg;
-	cfg->ops = &meson_mmc_ops;
-
+	cfg->name = dev->name;
 	cfg->voltages = MMC_VDD_33_34 | MMC_VDD_32_33 |
 			MMC_VDD_31_32 | MMC_VDD_165_195;
 	cfg->host_caps = MMC_MODE_8BIT | MMC_MODE_4BIT |
@@ -282,16 +266,12 @@ static int meson_mmc_probe(struct udevice *dev)
 	cfg->f_max = 50000000;
 	cfg->b_max = 256;
 
-	mmc = mmc_create(cfg, pdata);
-	if (!mmc)
-		return -ENOMEM;
-
-	upriv->mmc = mmc;
+	upriv->mmc = &pdata->mmc;
 	return 0;
 }
 
 static const struct udevice_id meson_mmc_match[] = {
-	{ .compatible = "amlogic,meson-mmc" },
+	{ .compatible = "amlogic,meson-gx-mmc" },
 	{ /* sentinel */ }
 };
 
@@ -299,7 +279,9 @@ U_BOOT_DRIVER(meson_mmc) = {
 	.name = "meson_mmc",
 	.id = UCLASS_MMC,
 	.of_match = meson_mmc_match,
+	.bind = meson_mmc_bind,
 	.probe = meson_mmc_probe,
-	.ofdata_to_platdata = meson_mmc_ofdata_to_platdata,
+	.priv_auto_alloc_size = sizeof(struct meson_mmc_priv),
 	.platdata_auto_alloc_size = sizeof(struct meson_mmc_platdata),
+	.ops = &meson_mmc_ops,
 };

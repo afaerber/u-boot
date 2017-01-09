@@ -102,6 +102,10 @@ struct meson_mmc_regs {
 
 struct meson_mmc_platdata {
 	struct mmc_config cfg;
+	struct mmc mmc;
+};
+
+struct meson_mmc_priv {
 	struct meson_mmc_regs *sd_emmc_reg;
 	char *w_buf;
 };

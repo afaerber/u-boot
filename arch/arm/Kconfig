@@ -456,6 +456,7 @@ config ARCH_KEYSTONE
 
 config ARCH_MESON
 	bool "Amlogic Meson"
+	select BLK
 	help
 	  Support for the Meson SoC family developed by Amlogic Inc.,
 	  targeted at media players and tablet computers. We currently

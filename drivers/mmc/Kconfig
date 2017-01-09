@@ -183,6 +183,15 @@ config MMC_UNIPHIER
 	help
 	  This selects support for the SD/MMC Host Controller on UniPhier SoCs.
 
+config MMC_MESON
+	bool "Amlogic Meson MMC Host Controller support"
+	depends on BLK
+	select DM_MMC_OPS
+
+config MMC_MESON_SD_PORT
+	int "Amlogic Meson SD port"
+	depends on MMC_MESON
+
 config SANDBOX_MMC
 	bool "Sandbox MMC support"
 	depends on MMC && SANDBOX
