@@ -290,7 +290,7 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	return 0;
 }
 
-static void jz_mmc_set_ios(struct mmc *mmc)
+static int jz_mmc_set_ios(struct mmc *mmc)
 {
 	struct jz_mmc_priv *priv = mmc->priv;
 	u32 real_rate = jz_mmc_clock_rate();
@@ -311,6 +311,8 @@ static void jz_mmc_set_ios(struct mmc *mmc)
 		priv->flags |= JZ_MMC_BUS_WIDTH_4;
 	else
 		priv->flags |= JZ_MMC_BUS_WIDTH_1;
+
+	return 0;
 }
 
 static int jz_mmc_core_init(struct mmc *mmc)
