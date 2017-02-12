@@ -10,11 +10,8 @@
 #ifndef __CONFIG_CI20_H__
 #define __CONFIG_CI20_H__
 
-#define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_SKIP_LOWLEVEL_INIT
-#define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_MISC_INIT_R
-#define CONFIG_SYS_NO_FLASH
 #define CONFIG_LZO
 
 /* Ingenic JZ4780 clock configuration. */
@@ -49,11 +46,6 @@
 #define DM9000_IO			CONFIG_DM9000_BASE
 #define DM9000_DATA			(CONFIG_DM9000_BASE + 2)
 
-/* MMC */
-#define CONFIG_MMC
-#define CONFIG_GENERIC_MMC
-#define CONFIG_DOS_PARTITION
-
 /* Environment */
 #define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		0
@@ -67,7 +59,6 @@
 #define CONFIG_SYS_MAXARGS	32		/* Max number of command args */
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE
 						/* Boot argument buffer size */
-#define CONFIG_VERSION_VARIABLE			/* U-BOOT version */
 #define CONFIG_AUTO_COMPLETE			/* Command auto complete */
 #define CONFIG_CMDLINE_EDITING			/* Command history etc */
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
@@ -78,9 +69,6 @@
 
 /* SPL */
 #define CONFIG_SPL_FRAMEWORK
-#define CONFIG_SPL_LIBGENERIC_SUPPORT
-#define CONFIG_SPL_GPIO_SUPPORT
-#define CONFIG_SPL_MMC_SUPPORT
 
 #define CONFIG_SPL_STACK		0xf4008000 /* only max. 2KB spare! */
 
@@ -93,10 +81,7 @@
 #define CONFIG_SPL_LDSCRIPT		"arch/mips/mach-jz47xx/jz4780/u-boot-spl.lds"
 #define CONFIG_SPL_START_S_PATH		"arch/mips/mach-jz47xx"
 
-#define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	0x1c	/* 14KB offset */
-
 #ifdef CONFIG_SPL_BUILD
-#define CONFIG_USE_TINY_PRINTF
 #define CONFIG_SPL_ABORT_ON_RAW_IMAGE
 #define CONFIG_MMC_TINY
 #undef CONFIG_DM_MMC
