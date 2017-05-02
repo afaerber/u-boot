@@ -59,7 +59,7 @@ u32 spl_boot_mode(const u32 boot_device)
 }
 #endif /* CONFIG_SPL_BUILD */
 
-phys_size_t initdram(int board_type)
+int dram_init(void)
 {
 	return sdram_size(0) + sdram_size(1);
 }
