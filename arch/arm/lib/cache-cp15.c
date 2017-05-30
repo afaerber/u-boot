@@ -60,6 +60,14 @@ static inline void dram_bank_mmu_setup(int bank)
 	for (i = bd->bi_dram[bank].start >> 20;
 	     i < (bd->bi_dram[bank].start + bd->bi_dram[bank].size) >> 20;
 	     i++) {
+#ifdef CONFIG_DRIVER_OGMA
+		/* Keep OGMA DMA buf area uncacheable */
+		if ((i >= (CONFIG_DRIVER_OGMA_BUF_START >> 20)) &&
+			(i < (CONFIG_DRIVER_OGMA_BUF_END >> 20))) {
+			continue;
+		}
+#endif /* CONFIG_DRIVER_OGMA */
+
 		page_table[i] = i << 20 | (3 << 10) | CACHE_SETUP;
 	}
 }
@@ -70,6 +78,7 @@ static inline void mmu_setup(void)
 	u32 *page_table = (u32 *)gd->tlb_addr;
 	int i;
 	u32 reg;
+	bd_t *bd = gd->bd;
 
 	arm_init_before_mmu();
 	/* Set up an identity-mapping for all 4GB, rw for everyone */
@@ -77,6 +86,9 @@ static inline void mmu_setup(void)
 		page_table[i] = i << 20 | (3 << 10) | 0x12;
 
 	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
+		if (bd->bi_dram[i].start > (u64)CONFIG_SYS_SDRAM_BASE + gd->ram_size
+			|| bd->bi_dram[i].start < (u64)CONFIG_SYS_SDRAM_BASE)
+		continue;
 		dram_bank_mmu_setup(i);
 	}
 

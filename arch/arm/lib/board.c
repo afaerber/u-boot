@@ -151,7 +151,7 @@ static int display_dram_config(void)
 		print_size(gd->bd->bi_dram[i].size, "\n");
 	}
 #else
-	ulong size = 0;
+	unsigned long long size = 0;
 
 	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++)
 		size += gd->bd->bi_dram[i].size;
@@ -464,8 +464,10 @@ void board_init_f(ulong bootflag)
 	/* NOTREACHED - relocate_code() does not return */
 }
 
+#if !defined(CONFIG_SKIP_FLASH_PROBE)
 #if !defined(CONFIG_SYS_NO_FLASH)
 static char *failed = "*** failed ***\n";
+#endif
 #endif
 
 /*
@@ -482,8 +484,10 @@ static char *failed = "*** failed ***\n";
 void board_init_r(gd_t *id, ulong dest_addr)
 {
 	ulong malloc_start;
+#if !defined(CONFIG_SKIP_FLASH_PROBE)
 #if !defined(CONFIG_SYS_NO_FLASH)
 	ulong flash_size;
+#endif
 #endif
 
 	gd = id;
@@ -526,6 +530,7 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	arch_early_init_r();
 #endif
 
+#if !defined(CONFIG_SKIP_FLASH_PROBE)
 #if !defined(CONFIG_SYS_NO_FLASH)
 	puts("Flash: ");
 
@@ -551,13 +556,14 @@ void board_init_r(gd_t *id, ulong dest_addr)
 # endif /* CONFIG_SYS_FLASH_CHECKSUM */
 	} else {
 		puts(failed);
-		hang();
+		//hang();
 	}
 #endif
 
 #if defined(CONFIG_CMD_NAND)
 	puts("NAND:  ");
 	nand_init();		/* go init the NAND */
+#endif
 #endif
 
 #if defined(CONFIG_CMD_ONENAND)

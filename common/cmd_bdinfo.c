@@ -361,8 +361,13 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	for (i = 0; i < CONFIG_NR_DRAM_BANKS; ++i) {
 		print_num("DRAM bank",	i);
+#if defined(CONFIG_MB86S7X)
+		printf("-> start    = 0x%08X_%08X\n", bd->bi_dram[i].start_high, bd->bi_dram[i].start);
+		printf("-> size     = 0x%08X_%08X\n", bd->bi_dram[i].size_high, bd->bi_dram[i].size);
+#else
 		print_num("-> start",	bd->bi_dram[i].start);
 		print_num("-> size",	bd->bi_dram[i].size);
+#endif
 	}
 
 #if defined(CONFIG_CMD_NET)

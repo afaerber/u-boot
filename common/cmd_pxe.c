@@ -711,10 +711,11 @@ static int label_boot(struct pxe_label *label)
 	if (bootm_argv[3])
 		bootm_argc = 4;
 
-#ifdef CONFIG_CMD_BOOTZ
-	do_bootz(NULL, 0, bootm_argc, bootm_argv);
-#else
 	do_bootm(NULL, 0, bootm_argc, bootm_argv);
+
+#ifdef CONFIG_CMD_BOOTZ
+	/* Try booting a zImage if do_bootm returns */
+	do_bootz(NULL, 0, bootm_argc, bootm_argv);
 #endif
 	return 1;
 }

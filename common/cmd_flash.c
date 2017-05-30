@@ -301,6 +301,9 @@ static int do_flinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 #ifndef CONFIG_SYS_NO_FLASH
 	if (argc == 1) {	/* print info for all FLASH banks */
+#ifdef CONFIG_FLASH_CHIP_SELECT
+		printf ("\nFlash Chip #%i", get_chip_select());
+#endif
 		for (bank=0; bank <CONFIG_SYS_MAX_FLASH_BANKS; ++bank) {
 			printf ("\nBank # %ld: ", bank+1);
 
@@ -315,6 +318,9 @@ static int do_flinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			CONFIG_SYS_MAX_FLASH_BANKS);
 		return 1;
 	}
+#ifdef CONFIG_FLASH_CHIP_SELECT
+	printf ("\nFlash Chip #%i", get_chip_select());
+#endif
 	printf ("\nBank # %ld: ", bank);
 	flash_print_info (&flash_info[bank-1]);
 #endif /* CONFIG_SYS_NO_FLASH */
@@ -454,6 +460,10 @@ int flash_sect_erase (ulong addr_first, ulong addr_last)
 }
 #endif /* CONFIG_SYS_NO_FLASH */
 
+#ifdef CONFIG_PROTECTION_TB_OFFSET
+extern int save_protect_table(flash_info_t *info);
+#endif
+
 static int do_protect(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int rcode = 0;
@@ -525,7 +535,12 @@ static int do_protect(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #endif	/* CONFIG_SYS_FLASH_PROTECTION */
 			}
 #if defined(CONFIG_SYS_FLASH_PROTECTION)
-			if (!rcode) puts (" done\n");
+			if (!rcode) {
+#ifdef CONFIG_PROTECTION_TB_OFFSET				
+				save_protect_table(info);
+#endif
+				puts (" done\n");
+			}
 #endif	/* CONFIG_SYS_FLASH_PROTECTION */
 		}
 		return rcode;
@@ -550,7 +565,12 @@ static int do_protect(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		}
 
 #if defined(CONFIG_SYS_FLASH_PROTECTION)
-		if (!rcode) puts (" done\n");
+		if (!rcode) {
+#ifdef CONFIG_PROTECTION_TB_OFFSET			
+			save_protect_table(info);
+#endif
+			puts (" done\n");
+		}
 #endif	/* CONFIG_SYS_FLASH_PROTECTION */
 
 		return rcode;
@@ -573,6 +593,9 @@ static int do_protect(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 						bank, addr_first, addr_last);
 
 				rcode = flash_sect_protect (p, addr_first, addr_last);
+#ifdef CONFIG_PROTECTION_TB_OFFSET				
+				if(!rcode) save_protect_table(info);
+#endif				
 				return rcode;
 			}
 
@@ -612,7 +635,12 @@ static int do_protect(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		}
 
 #if defined(CONFIG_SYS_FLASH_PROTECTION)
-		if (!rcode) puts (" done\n");
+		if (!rcode) {
+#ifdef CONFIG_PROTECTION_TB_OFFSET			
+			save_protect_table(info);
+#endif
+			puts (" done\n");
+		}
 #endif	/* CONFIG_SYS_FLASH_PROTECTION */
 
 		return rcode;
@@ -668,11 +696,16 @@ int flash_sect_protect (int p, ulong addr_first, ulong addr_last)
 			}
 		}
 #if defined(CONFIG_SYS_FLASH_PROTECTION)
-		puts (" done\n");
+		if(!rcode) {
+#ifdef CONFIG_PROTECTION_TB_OFFSET
+			save_protect_table(info);
+#endif
+			puts (" done\n");
 #endif	/* CONFIG_SYS_FLASH_PROTECTION */
 
-		printf ("%sProtected %d sectors\n",
-			p ? "" : "Un-", protected);
+			printf ("%sProtected %d sectors\n",
+				p ? "" : "Un-", protected);
+		}
 	} else if (rcode == 0) {
 		puts ("Error: start and/or end address"
 			" not on sector boundary\n");
@@ -681,6 +714,25 @@ int flash_sect_protect (int p, ulong addr_first, ulong addr_last)
 	return rcode;
 }
 #endif /* CONFIG_SYS_NO_FLASH */
+
+#if defined(CONFIG_FLASH_CHIP_SELECT)
+int do_chip_select(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	if(argc != 2)
+		return CMD_RET_USAGE;
+
+	int cs = simple_strtoul(argv[1], NULL, 16);
+	
+	if (flash_chip_select(cs)) {
+		printf("Fail to select chip%d\n", cs);
+		return -1;
+	}
+
+	printf("Switch to flash chip #%i\n", cs);
+
+	return 0;
+}
+#endif
 
 
 /**************************************************/
@@ -739,6 +791,14 @@ U_BOOT_CMD(
 	TMP_PROT_OFF
 	"protect off all\n    - make all FLASH banks writable"
 );
+
+#if defined(CONFIG_FLASH_CHIP_SELECT)
+U_BOOT_CMD(
+	flcssw,    2,    1,    do_chip_select,
+	"change flash chip select",
+	"flchip N\n    - use flash at chip select #N\n"
+);
+#endif
 
 #undef	TMP_ERASE
 #undef	TMP_PROT_ON

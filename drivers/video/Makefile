@@ -43,6 +43,7 @@ COBJS-$(CONFIG_VIDEO_CT69000) += ct69000.o videomodes.o
 COBJS-$(CONFIG_VIDEO_DA8XX) += da8xx-fb.o videomodes.o
 COBJS-$(CONFIG_VIDEO_MB862xx) += mb862xx.o videomodes.o
 COBJS-$(CONFIG_VIDEO_MB86R0xGDC) += mb86r0xgdc.o videomodes.o
+COBJS-$(CONFIG_VIDEO_MB8AC0300) += mb8ac0300-fb.o
 COBJS-$(CONFIG_VIDEO_MX3) += mx3fb.o videomodes.o
 COBJS-$(CONFIG_VIDEO_IPUV3) += mxc_ipuv3_fb.o ipu_common.o ipu_disp.o
 COBJS-$(CONFIG_VIDEO_OMAP3) += omap3_dss.o

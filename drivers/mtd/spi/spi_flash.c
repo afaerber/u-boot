@@ -14,13 +14,21 @@
 #include <watchdog.h>
 
 #include "spi_flash_internal.h"
+static int ref_count = 0;
 
-static void spi_flash_addr(u32 addr, u8 *cmd)
+static void spi_flash_addr(u32 addr, u8 *cmd, u32 addr_size)
 {
 	/* cmd[0] is actual command */
-	cmd[1] = addr >> 16;
-	cmd[2] = addr >> 8;
-	cmd[3] = addr >> 0;
+	if (addr_size == 4) {
+		cmd[1] = addr >> 24;
+		cmd[2] = addr >> 16;
+		cmd[3] = addr >> 8;
+		cmd[4] = addr >> 0;
+	} else {
+		cmd[1] = addr >> 16;
+		cmd[2] = addr >> 8;
+		cmd[3] = addr >> 0;
+	}
 }
 
 static int spi_flash_read_write(struct spi_slave *spi,
@@ -65,13 +73,47 @@ int spi_flash_cmd_write(struct spi_slave *spi, const u8 *cmd, size_t cmd_len,
 	return spi_flash_read_write(spi, cmd, cmd_len, data, NULL, data_len);
 }
 
+static int read_rfsr(struct spi_flash *flash)
+{
+	ssize_t retval;
+	u8 code = 0x70;
+	u8 val;
+
+	retval = spi_flash_cmd_read(flash->spi, &code, 1, &val, 1);
+
+	if (retval < 0) {
+		return retval;
+	}
+
+	return val;
+}
+
+static int wait_rfs_ready(struct spi_flash *flash)
+{
+	unsigned int timeout = 1000;
+	int sr;
+	
+	do {
+		if ((sr = read_rfsr(flash)) < 0)
+			break;
+		else if (sr & 0x80)
+			return 0;
+
+		mdelay(10);
+		timeout--;
+	
+	} while (timeout > 0);
+
+	return 1;
+}
+
 int spi_flash_cmd_write_multi(struct spi_flash *flash, u32 offset,
 		size_t len, const void *buf)
 {
 	unsigned long page_addr, byte_addr, page_size;
 	size_t chunk_len, actual;
 	int ret;
-	u8 cmd[4];
+	u8 cmd[5];
 
 	page_size = flash->page_size;
 	page_addr = offset / page_size;
@@ -87,11 +129,13 @@ int spi_flash_cmd_write_multi(struct spi_flash *flash, u32 offset,
 	for (actual = 0; actual < len; actual += chunk_len) {
 		chunk_len = min(len - actual, page_size - byte_addr);
 
-		cmd[1] = page_addr >> 8;
-		cmd[2] = page_addr;
-		cmd[3] = byte_addr;
+		spi_flash_addr(offset + actual, cmd, flash->address_len);
 
-		debug("PP: 0x%p => cmd = { 0x%02x 0x%02x%02x%02x } chunk_len = %zu\n",
+		if (flash->address_len == 4)
+			debug("PP: 0x%p => cmd = { 0x%02x 0x%02x%02x%02x%02x } chunk_len = %zu\n",
+		      buf + actual, cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], chunk_len);
+		else
+			debug("PP: 0x%p => cmd = { 0x%02x 0x%02x%02x%02x } chunk_len = %zu\n",
 		      buf + actual, cmd[0], cmd[1], cmd[2], cmd[3], chunk_len);
 
 		ret = spi_flash_cmd_write_enable(flash);
@@ -100,7 +144,7 @@ int spi_flash_cmd_write_multi(struct spi_flash *flash, u32 offset,
 			break;
 		}
 
-		ret = spi_flash_cmd_write(flash->spi, cmd, 4,
+		ret = spi_flash_cmd_write(flash->spi, cmd, flash->address_len + 1,
 					  buf + actual, chunk_len);
 		if (ret < 0) {
 			debug("SF: write failed\n");
@@ -110,6 +154,12 @@ int spi_flash_cmd_write_multi(struct spi_flash *flash, u32 offset,
 		ret = spi_flash_cmd_wait_ready(flash, SPI_FLASH_PROG_TIMEOUT);
 		if (ret)
 			break;
+
+#ifdef CONFIG_QUIRK_N25Q512A
+		ret = wait_rfs_ready(flash);
+		if (ret)
+			break;
+#endif
 
 		page_addr++;
 		byte_addr = 0;
@@ -129,22 +179,48 @@ int spi_flash_read_common(struct spi_flash *flash, const u8 *cmd,
 	int ret;
 
 	spi_claim_bus(spi);
-	ret = spi_flash_cmd_read(spi, cmd, cmd_len, data, data_len);
+	ret = spi_flash_cmd_read(spi, cmd, cmd_len, data, data_len);	
 	spi_release_bus(spi);
 
 	return ret;
 }
 
+#define BUFF_SIZE 65536
 int spi_flash_cmd_read_fast(struct spi_flash *flash, u32 offset,
 		size_t len, void *data)
 {
+	int ret = 0;
 	u8 cmd[5];
-
 	cmd[0] = CMD_READ_ARRAY_FAST;
-	spi_flash_addr(offset, cmd);
-	cmd[4] = 0x00;
+	u8 output[BUFF_SIZE];
+	u8 *tmp = output;
+	u8 *data_in = (u8 *)data;
+	u32 next_offset = offset;
+	size_t remain_size = len;
+	size_t copy_size;
 
-	return spi_flash_read_common(flash, cmd, sizeof(cmd), data, len);
+	while (remain_size > 0) {
+		if (remain_size + flash->dummy_read / 8 <= BUFF_SIZE) 
+			copy_size = remain_size + flash->dummy_read / 8;
+		else 
+			copy_size = BUFF_SIZE;
+
+		spi_flash_addr(next_offset, cmd, flash->address_len);
+		ret = spi_flash_read_common(flash, cmd, flash->address_len + 1, tmp, copy_size);
+		if (ret)
+			break;
+
+		copy_size -= (flash->dummy_read / 8);
+		next_offset += copy_size;
+		remain_size -= copy_size;
+
+		/* discard the dummy bytes */
+		tmp += (flash->dummy_read / 8);
+		memcpy(data_in, tmp, copy_size);
+		data_in += copy_size;
+	}
+
+	return ret;
 }
 
 int spi_flash_cmd_poll_bit(struct spi_flash *flash, unsigned long timeout,
@@ -194,7 +270,7 @@ int spi_flash_cmd_erase(struct spi_flash *flash, u32 offset, size_t len)
 {
 	u32 start, end, erase_size;
 	int ret;
-	u8 cmd[4];
+	u8 cmd[5];
 
 	erase_size = flash->sector_size;
 	if (offset % erase_size || len % erase_size) {
@@ -216,23 +292,32 @@ int spi_flash_cmd_erase(struct spi_flash *flash, u32 offset, size_t len)
 	end = start + len;
 
 	while (offset < end) {
-		spi_flash_addr(offset, cmd);
+		spi_flash_addr(offset, cmd, flash->address_len);
 		offset += erase_size;
 
-		debug("SF: erase %2x %2x %2x %2x (%x)\n", cmd[0], cmd[1],
-		      cmd[2], cmd[3], offset);
+		if (flash->address_len == 4)
+			debug("SF: erase %2x %2x %2x %2x %2x (%x)\n", cmd[0], cmd[1],
+		      		cmd[2], cmd[3], cmd[4], offset);
+		else
+			debug("SF: erase %2x %2x %2x %2x (%x)\n", cmd[0], cmd[1],
+		      		cmd[2], cmd[3], offset);
 
 		ret = spi_flash_cmd_write_enable(flash);
 		if (ret)
 			goto out;
 
-		ret = spi_flash_cmd_write(flash->spi, cmd, sizeof(cmd), NULL, 0);
+		ret = spi_flash_cmd_write(flash->spi, cmd, flash->address_len + 1, NULL, 0);
 		if (ret)
 			goto out;
 
 		ret = spi_flash_cmd_wait_ready(flash, SPI_FLASH_PAGE_ERASE_TIMEOUT);
 		if (ret)
 			goto out;
+#ifdef CONFIG_QUIRK_N25Q512A
+		ret = wait_rfs_ready(flash);
+		if (ret)
+			goto out;
+#endif
 	}
 
 	debug("SF: Successfully erased %zu bytes @ %#x\n", len, start);
@@ -265,6 +350,32 @@ int spi_flash_cmd_write_status(struct spi_flash *flash, u8 sr)
 		debug("SF: write status register timed out\n");
 		return ret;
 	}
+
+	return 0;
+}
+
+#define CMD_EN_4BYTE 0xB7
+#define CMD_DIS_4BYTE 0xE9
+
+int spi_set_4byte_mode(struct spi_flash *flash, int en)
+{
+	u8 cmd;
+	int ret;
+
+	ret = spi_flash_cmd_write_enable(flash);
+	if (ret < 0) {
+		debug("SF: enabling write failed\n");
+		return ret;
+	}
+
+	cmd = en ? CMD_EN_4BYTE : CMD_DIS_4BYTE;
+	ret = spi_flash_cmd_write(flash->spi, &cmd, 1, NULL, 0);
+	if (ret) {
+		debug("SF: fail to set address mode\n");
+		return ret;
+	}
+
+	flash->address_len = en ? 4 : 3;
 
 	return 0;
 }
@@ -385,11 +496,16 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 		goto err_manufacturer_probe;
 	}
 
+	/* Don't print these to keep the print board info format*/
+#ifndef CONFIG_FLASH_CMD_FOR_SF
 	printf("SF: Detected %s with page size ", flash->name);
 	print_size(flash->sector_size, ", total ");
 	print_size(flash->size, "\n");
+#endif
 
 	spi_release_bus(spi);
+
+	ref_count++;
 
 	return flash;
 
@@ -397,12 +513,77 @@ err_manufacturer_probe:
 err_read_id:
 	spi_release_bus(spi);
 err_claim_bus:
-	spi_free_slave(spi);
+	//spi_free_slave(spi);
 	return NULL;
 }
 
 void spi_flash_free(struct spi_flash *flash)
 {
+	ref_count--;
+	if (ref_count <= 0 && flash->address_len == 4)
+		spi_set_4byte_mode(flash, 0);
 	spi_free_slave(flash->spi);
 	free(flash);
 }
+
+#ifdef CONFIG_FLASH_CMD_FOR_SF
+int spi_read_lock_status(struct spi_flash *flash, u32 offset, u8 *lock)
+{
+	int ret;;
+	u8 cmd[4];
+	
+	ret = spi_flash_cmd_write_enable(flash);
+		if (ret)
+			return -1;
+
+	/* send read lock status command */
+	cmd[0] = 0xE8;
+	spi_flash_addr(offset, cmd, flash->address_len);
+	ret = spi_flash_cmd_read(flash->spi, cmd, sizeof(cmd), lock, 1);
+	if (ret)
+		debug("Fail to read loc status register.\n");
+
+	/* wait for completion */
+	ret = spi_flash_cmd_wait_ready(flash, SPI_FLASH_PAGE_ERASE_TIMEOUT);
+	if (ret)
+		return ret;
+#ifdef CONFIG_QUIRK_N25Q512A
+	ret = wait_rfs_ready(flash);
+	if (ret)
+		return ret;
+#endif
+
+	return 0;
+	
+}
+
+int spi_write_lock_status(struct spi_flash *flash, u32 offset, u8 lock)
+{
+	int ret;
+	u8 cmd[5];
+	
+	ret = spi_flash_cmd_write_enable(flash);
+		if (ret)
+			return -1;
+
+	/* send write lock status command */
+	cmd[0] = 0xE5;
+	spi_flash_addr(offset, cmd, flash->address_len);
+	cmd[4] = lock;
+	ret = spi_flash_cmd_write(flash->spi, cmd, sizeof(cmd), NULL, 0);
+	if (ret)
+		debug("fail to write lock status register.\n");
+
+	/* wait for completion */
+	ret = spi_flash_cmd_wait_ready(flash, SPI_FLASH_PAGE_ERASE_TIMEOUT);
+	if (ret)
+		return ret;
+#ifdef CONFIG_QUIRK_N25Q512A
+	ret = wait_rfs_ready(flash);
+	if (ret)
+		return ret;
+#endif
+
+	return 0;
+}
+#endif /* CONFIG_FLASH_CMD_FOR_SF */

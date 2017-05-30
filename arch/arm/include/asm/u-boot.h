@@ -45,8 +45,15 @@ typedef struct bd_info {
 	unsigned long	bi_ddr_freq; /* ddr frequency */
     struct				/* RAM configuration */
     {
+#if defined(CONFIG_MB86S7X)
+	ulong start_high;
 	ulong start;
+	ulong size_high;
 	ulong size;
+#else
+	u64 start;
+	u64 size;
+#endif
     }			bi_dram[CONFIG_NR_DRAM_BANKS];
 } bd_t;
 

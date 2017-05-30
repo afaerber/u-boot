@@ -105,12 +105,40 @@ static const struct stmicro_spi_flash_params stmicro_spi_flash_table[] = {
 		.name = "N25Q128A",
 	},
 	{
+		.id = 0xbb20,
+		.pages_per_sector = 256,
+		.nr_sectors = 1024,
+		.name = "N25Q512A",
+	},
+
+	{
 		.id = 0xba19,
 		.pages_per_sector = 256,
 		.nr_sectors = 512,
 		.name = "N25Q256",
 	},
 };
+
+static int spi_flash_cmd_read_slow(struct spi_flash *flash, u32 offset,
+		size_t len, void *data)
+{
+	u8 cmd[5];
+
+	cmd[0] = CMD_READ_ARRAY_SLOW;
+	if (flash->address_len == 4) {
+		cmd[1] = offset >> 24;
+		cmd[2] = offset >> 16;
+		cmd[3] = offset >> 8;
+		cmd[4] = offset >> 0;
+	} else {
+		cmd[1] = offset >> 16;
+		cmd[2] = offset >> 8;
+		cmd[3] = offset >> 0;
+	}
+
+	return spi_flash_read_common(flash, cmd, sizeof(cmd), data, len);
+}
+
 
 struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 * idcode)
 {
@@ -154,13 +182,27 @@ struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 * idcode)
 
 	flash->spi = spi;
 	flash->name = params->name;
+	flash->address_len = 3;
 
-	flash->write = spi_flash_cmd_write_multi;
-	flash->erase = spi_flash_cmd_erase;
-	flash->read = spi_flash_cmd_read_fast;
+	/* n25q512a needs special handle */
+	if(params->id == 0xbb20) {
+		flash->write = spi_flash_cmd_write_multi;
+		flash->erase = spi_flash_cmd_erase;
+		flash->read = spi_flash_cmd_read_slow;
+		spi_set_4byte_mode(flash, 1);
+		flash->dummy_read = 0;
+	} else {
+		flash->write = spi_flash_cmd_write_multi;
+		flash->erase = spi_flash_cmd_erase;
+		flash->read = spi_flash_cmd_read_fast;
+		flash->dummy_read = 8;
+	}
+
 	flash->page_size = 256;
 	flash->sector_size = 256 * params->pages_per_sector;
 	flash->size = flash->sector_size * params->nr_sectors;
+	if (params->nr_sectors > CONFIG_SYS_MAX_FLASH_SECT)
+		flash->size = flash->sector_size * CONFIG_SYS_MAX_FLASH_SECT;
 
 	return flash;
 }

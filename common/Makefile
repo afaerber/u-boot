@@ -59,6 +59,7 @@ COBJS-$(CONFIG_ENV_IS_IN_NVRAM) += env_nvram.o
 COBJS-$(CONFIG_ENV_IS_IN_ONENAND) += env_onenand.o
 COBJS-$(CONFIG_ENV_IS_IN_SPI_FLASH) += env_sf.o
 COBJS-$(CONFIG_ENV_IS_IN_REMOTE) += env_remote.o
+COBJS-$(CONFIG_ENV_IS_IN_SCBDEV) += env_scbdev.o
 COBJS-$(CONFIG_ENV_IS_NOWHERE) += env_nowhere.o
 
 # command
@@ -171,6 +172,9 @@ COBJS-$(CONFIG_YAFFS2) += cmd_yaffs2.o
 COBJS-$(CONFIG_CMD_SPL) += cmd_spl.o
 COBJS-$(CONFIG_CMD_ZIP) += cmd_zip.o
 COBJS-$(CONFIG_CMD_ZFS) += cmd_zfs.o
+ifdef CONFIG_CMD_ROMFS
+COBJS-y += cmd_romfs.o
+endif
 
 # others
 ifdef CONFIG_DDR_SPD

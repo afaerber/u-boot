@@ -40,4 +40,8 @@
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_XIMG		/* Load part of Multi Image	*/
 
+#define CONFIG_CMD_LOOP     /* infinite loop on address range */
+#define CONFIG_CMD_IMXTRACT /* extract a part of a multi-image */
+#define CONFIG_CMD_BOOTVX   /* Boot vxWorks from an ELF image */
+
 #endif	/* _CONFIG_CMD_DEFAULT_H */

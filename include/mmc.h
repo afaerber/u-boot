@@ -47,6 +47,10 @@
 #define MMC_MODE_8BIT		0x200
 #define MMC_MODE_SPI		0x400
 #define MMC_MODE_HC		0x800
+#define MMC_MODE_HS200		0x1000
+#define MMC_MODE_BUS_WIDTH_TEST	0x2000
+
+#define MMC_TIMING_MMC_HS200 8
 
 #define MMC_MODE_MASK_WIDTH_BITS (MMC_MODE_4BIT | MMC_MODE_8BIT)
 #define MMC_MODE_WIDTH_BITS_SHIFT 8
@@ -75,9 +79,13 @@
 #define MMC_CMD_SEND_CID		10
 #define MMC_CMD_STOP_TRANSMISSION	12
 #define MMC_CMD_SEND_STATUS		13
+#define MMC_CMD_BUS_TEST_R		14   /* adtc                    R1  */
 #define MMC_CMD_SET_BLOCKLEN		16
 #define MMC_CMD_READ_SINGLE_BLOCK	17
 #define MMC_CMD_READ_MULTIPLE_BLOCK	18
+#define MMC_CMD_BUS_TEST_W		19   /* adtc                    R1  */
+#define MMC_CMD_SEND_TUNING_BLOCK    19   /* adtc                    R1  */
+#define MMC_CMD_SEND_TUNING_BLOCK_HS200	21	/* adtc R1  */
 #define MMC_CMD_WRITE_SINGLE_BLOCK	24
 #define MMC_CMD_WRITE_MULTIPLE_BLOCK	25
 #define MMC_CMD_ERASE_GROUP_START	35
@@ -100,9 +108,6 @@
 /* SCR definitions in different words */
 #define SD_HIGHSPEED_BUSY	0x00020000
 #define SD_HIGHSPEED_SUPPORTED	0x00020000
-
-#define MMC_HS_TIMING		0x00000100
-#define MMC_HS_52MHZ		0x2
 
 #define OCR_BUSY		0x80000000
 #define OCR_HCS			0x40000000
@@ -136,6 +141,9 @@
 #define MMC_VDD_34_35		0x00400000	/* VDD voltage 3.4 ~ 3.5 */
 #define MMC_VDD_35_36		0x00800000	/* VDD voltage 3.5 ~ 3.6 */
 
+#define MMC_SELECT_VDD_180 0x0008
+#define MMC_SELECT_VDD_330 0x0000
+
 #define MMC_SWITCH_MODE_CMD_SET		0x00 /* Change the command set */
 #define MMC_SWITCH_MODE_SET_BITS	0x01 /* Set bits in EXT_CSD byte
 						addressed by index which are
@@ -147,6 +155,9 @@
 
 #define SD_SWITCH_CHECK		0
 #define SD_SWITCH_SWITCH	1
+
+#define CSD_TAAC(mmc)	((mmc->csd[0] >> 16) & 0xff)
+#define CSD_NSAC(mmc)	((mmc->csd[0] >>  8) & 0xff)
 
 /*
  * EXT_CSD fields
@@ -172,6 +183,14 @@
 
 #define EXT_CSD_CARD_TYPE_26	(1 << 0)	/* Card can run at 26MHz */
 #define EXT_CSD_CARD_TYPE_52	(1 << 1)	/* Card can run at 52MHz */
+#define EXT_CSD_CARD_TYPE_DDR_1_8V	(1 << 2)
+#define EXT_CSD_CARD_TYPE_DDR_1_2V	(1 << 3)
+#define EXT_CSD_CARD_TYPE_DDR_52	(EXT_CSD_CARD_TYPE_DDR_1_8V \
+					| EXT_CSD_CARD_TYPE_DDR_1_2V)
+#define EXT_CSD_CARD_TYPE_HS200_1_8V	(1 << 4)
+#define EXT_CSD_CARD_TYPE_HS200_1_2V	(1 << 5)
+#define EXT_CSD_CARD_TYPE_HS200		(EXT_CSD_CARD_TYPE_HS200_1_8V \
+					| EXT_CSD_CARD_TYPE_HS200_1_2V)
 
 #define EXT_CSD_BUS_WIDTH_1	0	/* Card is in 1 bit mode */
 #define EXT_CSD_BUS_WIDTH_4	1	/* Card is in 4 bit mode */
@@ -255,18 +274,31 @@ struct mmc {
 	uint write_bl_len;
 	uint erase_grp_size;
 	u64 capacity;
+	uint timing;
+	uint taac_ns;
+	uint nsac_clock;
 	block_dev_desc_t block_dev;
 	int (*send_cmd)(struct mmc *mmc,
 			struct mmc_cmd *cmd, struct mmc_data *data);
 	void (*set_ios)(struct mmc *mmc);
 	int (*init)(struct mmc *mmc);
 	int (*getcd)(struct mmc *mmc);
+#ifdef CONFIG_F_SDH30_SDHCI
+	void (*get_ro)(struct mmc *mmc);
+	unsigned int state;
+	unsigned int tm_clock;
+#define MMC_STATE_READONLY	(1<<0)	/* card is read-only */
+#endif
+	int (*set_signal_voltage)(struct mmc *mmc, int voltage);
+	int (*execute_tuning)(struct mmc *mmc, u32 opcode);
+	int (*reset) (struct mmc *mmc);
 	uint b_max;
 };
 
 int mmc_register(struct mmc *mmc);
 int mmc_initialize(bd_t *bis);
 int mmc_init(struct mmc *mmc);
+int mmc_reset(struct mmc *mmc);
 int mmc_read(struct mmc *mmc, u64 src, uchar *dst, int size);
 void mmc_set_clock(struct mmc *mmc, uint clock);
 struct mmc *find_mmc_device(int dev_num);

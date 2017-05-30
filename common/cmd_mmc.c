@@ -25,6 +25,8 @@
 #include <command.h>
 #include <mmc.h>
 
+extern int mmc_part_bootenable(int dev_num, unsigned int part_num);
+
 static int curr_device = -1;
 #ifndef CONFIG_GENERIC_MMC
 int do_mmc (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
@@ -170,6 +172,8 @@ static int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			printf("no mmc device at slot %x\n", curr_device);
 			return 1;
 		}
+		if (mmc->has_init)
+			mmc_reset(mmc);
 
 		mmc->has_init = 0;
 

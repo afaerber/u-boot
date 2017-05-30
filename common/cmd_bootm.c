@@ -87,14 +87,16 @@ static int do_imls(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 static void fixup_silent_linux(void);
 #endif
 
-static image_header_t *image_get_kernel(ulong img_addr, int verify);
 #if defined(CONFIG_FIT)
 static int fit_check_kernel(const void *fit, int os_noffset, int verify);
 #endif
 
+#if !defined(BOOTM_DIRECT_START_LINUX)
+static image_header_t *image_get_kernel(ulong img_addr, int verify);
 static void *boot_get_kernel(cmd_tbl_t *cmdtp, int flag, int argc,
 				char * const argv[], bootm_headers_t *images,
 				ulong *os_data, ulong *os_len);
+#endif
 
 /*
  *  Continue booting an OS image; caller already has:
@@ -192,7 +194,6 @@ static inline void boot_start_lmb(bootm_headers_t *images) { }
 
 static int bootm_start(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	void		*os_hdr;
 	int		ret;
 
 	memset((void *)&images, 0, sizeof(images));
@@ -201,6 +202,16 @@ static int bootm_start(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 	boot_start_lmb(&images);
 
 	bootstage_mark_name(BOOTSTAGE_ID_BOOTM_START, "bootm_start");
+
+#if defined(BOOTM_DIRECT_START_LINUX)
+	images.os.os = IH_OS_LINUX;
+	images.os.type = IH_TYPE_KERNEL;
+	if (argc < 2)
+		images.ep = load_addr;
+	else
+		images.ep = simple_strtoul(argv[1], NULL, 16);
+#else
+	void		*os_hdr;
 
 	/* get kernel image header, start address and length */
 	os_hdr = boot_get_kernel(cmdtp, flag, argc, argv,
@@ -279,7 +290,7 @@ static int bootm_start(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 		images.os.load = images.os.image_start;
 		images.ep += images.os.load;
 	}
-
+#endif
 	if (((images.os.type == IH_TYPE_KERNEL) ||
 	     (images.os.type == IH_TYPE_KERNEL_NOLOAD) ||
 	     (images.os.type == IH_TYPE_MULTI)) &&
@@ -305,7 +316,9 @@ static int bootm_start(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 #endif
 	}
 
+#if !defined(BOOTM_DIRECT_START_LINUX)
 	images.os.start = (ulong)os_hdr;
+#endif
 	images.state = BOOTM_STATE_START;
 
 	return 0;
@@ -327,6 +340,10 @@ static int bootm_load_os(image_info_t os, ulong *load_end, int boot_progress)
 #if defined(CONFIG_LZMA) || defined(CONFIG_LZO)
 	int ret;
 #endif /* defined(CONFIG_LZMA) || defined(CONFIG_LZO) */
+
+#ifdef BOOTM_DIRECT_START_LINUX
+	   return 0;
+#endif
 
 	const char *type_name = genimg_get_type_name(os.type);
 
@@ -515,9 +532,10 @@ static int do_bootm_subcommand(cmd_tbl_t *cmdtp, int flag, int argc,
 			ret = bootm_load_os(images.os, &load_end, 0);
 			if (ret)
 				return ret;
-
+#if !defined(BOOTM_DIRECT_START_LINUX)
 			lmb_reserve(&images.lmb, images.os.load,
 					(load_end - images.os.load));
+#endif
 			break;
 #ifdef CONFIG_SYS_BOOT_RAMDISK_HIGH
 		case BOOTM_STATE_RAMDISK:
@@ -773,6 +791,7 @@ int bootm_maybe_autostart(cmd_tbl_t *cmdtp, const char *cmd)
  *     pointer to a legacy image header if valid image was found
  *     otherwise return NULL
  */
+#if !defined(BOOTM_DIRECT_START_LINUX)
 static image_header_t *image_get_kernel(ulong img_addr, int verify)
 {
 	image_header_t *hdr = (image_header_t *)img_addr;
@@ -811,6 +830,7 @@ static image_header_t *image_get_kernel(ulong img_addr, int verify)
 	}
 	return hdr;
 }
+#endif
 
 /**
  * fit_check_kernel - verify FIT format kernel subimage
@@ -872,6 +892,7 @@ static int fit_check_kernel(const void *fit, int os_noffset, int verify)
  *     pointer to image header if valid image was found, plus kernel start
  *     address and length, otherwise NULL
  */
+#if !defined(BOOTM_DIRECT_START_LINUX)
 static void *boot_get_kernel(cmd_tbl_t *cmdtp, int flag, int argc,
 		char * const argv[], bootm_headers_t *images, ulong *os_data,
 		ulong *os_len)
@@ -1042,6 +1063,7 @@ static void *boot_get_kernel(cmd_tbl_t *cmdtp, int flag, int argc,
 
 	return (void *)img_addr;
 }
+#endif
 
 #ifdef CONFIG_SYS_LONGHELP
 static char bootm_help_text[] =

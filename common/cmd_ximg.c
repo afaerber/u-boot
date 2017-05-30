@@ -24,6 +24,7 @@
  * MA 02111-1307 USA
  */
 
+#ifdef CONFIG_CMD_IMXTRACT
 
 /*
  * Multi Image extract
@@ -280,3 +281,4 @@ U_BOOT_CMD(
 	imxtract, 4, 1, do_imgextract,
 	"extract a part of a multi-image", imgextract_help_text
 );
+#endif /* CONFIG_CMD_IMXTRACT */

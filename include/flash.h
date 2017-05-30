@@ -129,6 +129,11 @@ extern int jedec_flash_match(flash_info_t *info, ulong base);
 extern flash_info_t *flash_get_info(ulong base);
 #endif
 
+#if defined(CONFIG_FLASH_CHIP_SELECT)
+extern int flash_chip_select(int cs);
+extern int get_chip_select(void);
+#endif
+
 /*-----------------------------------------------------------------------
  * return codes from flash_write():
  */

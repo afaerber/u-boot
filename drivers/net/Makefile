@@ -80,6 +80,8 @@ COBJS-$(CONFIG_XILINX_EMACLITE) += xilinx_emaclite.o
 COBJS-$(CONFIG_XILINX_LL_TEMAC) += xilinx_ll_temac.o xilinx_ll_temac_mdio.o \
 		xilinx_ll_temac_fifo.o xilinx_ll_temac_sdma.o
 COBJS-$(CONFIG_ZYNQ_GEM) += zynq_gem.o
+COBJS-$(CONFIG_DRIVER_FGMAC4) += fgmac4.o
+COBJS-$(CONFIG_DRIVER_OGMA) += ogma.o ogma_basic_access.o ogma_gmac_access.o
 
 COBJS	:= $(sort $(COBJS-y))
 SRCS	:= $(COBJS:.o=.c)

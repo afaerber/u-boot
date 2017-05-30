@@ -362,8 +362,10 @@ U_BOOT_CMD(
 	"\t  or via section headers (-s)"
 );
 
+#ifdef CONFIG_CMD_BOOTVX
 U_BOOT_CMD(
 	bootvx,      2,      0,      do_bootvx,
 	"Boot vxWorks from an ELF image",
 	" [address] - load address of vxWorks ELF image."
 );
+#endif /* CONFIG_CMD_BOOTVX */

@@ -33,6 +33,8 @@
 #include <dataflash.h>
 #endif
 #include <watchdog.h>
+#include <malloc.h>
+
 
 static int mod_mem(cmd_tbl_t *, int, int, int, char * const []);
 
@@ -44,6 +46,10 @@ static uint	dp_last_length = 0x40;
 static uint	mm_last_addr, mm_last_size;
 
 static	ulong	base_address = 0;
+
+#ifdef CONFIG_FLASH_CMD_FOR_SF
+extern int read_flash_buff (uchar *dest, ulong addr, ulong cnt);
+#endif
 
 /* Memory Display
  *
@@ -132,7 +138,24 @@ static int do_mem_md(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			}
 		} while (nbytes > 0);
 	} else
-# endif
+# elif defined(CONFIG_FLASH_CMD_FOR_SF)
+	if (addr2info(addr)) {
+		uchar linebuf[DISP_LINE_LEN];
+		ulong linebytes, nbytes = length * size;
+		do {
+			linebytes = (nbytes > DISP_LINE_LEN) ? DISP_LINE_LEN : nbytes;
+			read_flash_buff(linebuf, addr,linebytes);
+			print_buffer(addr, linebuf, size, linebytes/size, DISP_LINE_LEN/size);
+
+			nbytes -= linebytes;
+			addr += linebytes;
+			if (ctrlc()) {
+				rc = 1;
+				break;
+			}
+		} while (nbytes > 0);
+	} else
+#endif
 
 	{
 		/* Print the lines. */
@@ -350,6 +373,16 @@ static int do_mem_cp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	}
 
 #ifndef CONFIG_SYS_NO_FLASH
+
+#ifdef CONFIG_FLASH_CMD_FOR_SF
+	uchar *data = NULL;
+	if (addr2info(addr) != NULL) {
+		data = malloc(size);
+		read_flash_buff(data, addr, count*size);
+		addr = (ulong)data;
+	}
+#endif
+
 	/* check if we are copying to Flash */
 	if ( (addr2info(dest) != NULL)
 #ifdef CONFIG_HAS_DATAFLASH
@@ -361,6 +394,10 @@ static int do_mem_cp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		puts ("Copy to Flash... ");
 
 		rc = flash_write ((char *)addr, dest, count*size);
+#ifdef CONFIG_FLASH_CMD_FOR_SF
+		if(data)
+			free(data);
+#endif
 		if (rc != 0) {
 			flash_perror (rc);
 			return (1);
@@ -447,6 +484,7 @@ static int do_mem_base(cmd_tbl_t *cmdtp, int flag, int argc,
 	return 0;
 }
 
+#ifdef CONFIG_CMD_LOOP
 static int do_mem_loop(cmd_tbl_t *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
@@ -515,6 +553,7 @@ static int do_mem_loop(cmd_tbl_t *cmdtp, int flag, int argc,
 			*cp++;
 	}
 }
+#endif /* CONFIG_CMD_LOOP */
 
 #ifdef CONFIG_LOOPW
 int do_mem_loopw (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
@@ -1210,11 +1249,13 @@ U_BOOT_CMD(
 	"base off\n    - set address offset for memory commands to 'off'"
 );
 
+#ifdef CONFIG_CMD_LOOP
 U_BOOT_CMD(
 	loop,	3,	1,	do_mem_loop,
 	"infinite loop on address range",
 	"[.b, .w, .l] address number_of_objects"
 );
+#endif /* CONFIG_CMD_LOOP */
 
 #ifdef CONFIG_LOOPW
 U_BOOT_CMD(

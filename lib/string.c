@@ -542,13 +542,21 @@ void * memmove(void * dest,const void *src,size_t count)
 	if (src == dest)
 		return dest;
 
-	if (dest <= src) {
+	if (dest < src) {
+
+		if ((unsigned long)dest + count <= (unsigned long)src)
+			return memcpy(dest, src, count);
+
 		tmp = (char *) dest;
 		s = (char *) src;
 		while (count--)
 			*tmp++ = *s++;
 		}
 	else {
+
+		if ((unsigned long)src + count <= (unsigned long)dest)
+			return memcpy(dest, src, count);
+
 		tmp = (char *) dest + count;
 		s = (char *) src + count;
 		while (count--)

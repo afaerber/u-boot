@@ -76,6 +76,7 @@ void arch_lmb_reserve(struct lmb *lmb)
 }
 
 #ifdef CONFIG_OF_LIBFDT
+#ifndef NO_FIX_MEMORY_NODE
 static int fixup_memory_node(void *blob)
 {
 	bd_t	*bd = gd->bd;
@@ -84,12 +85,20 @@ static int fixup_memory_node(void *blob)
 	u64 size[CONFIG_NR_DRAM_BANKS];
 
 	for (bank = 0; bank < CONFIG_NR_DRAM_BANKS; bank++) {
+#if defined(CONFIG_MB86S7X)
+		start[bank] = bd->bi_dram[bank].start_high;
+		start[bank] = (start[bank] << 32) + bd->bi_dram[bank].start;
+		size[bank] = bd->bi_dram[bank].size_high;
+		size[bank] = (size[bank] << 32) + bd->bi_dram[bank].size;
+#else
 		start[bank] = bd->bi_dram[bank].start;
 		size[bank] = bd->bi_dram[bank].size;
+#endif
 	}
 
 	return fdt_fixup_memory_banks(blob, start, size, CONFIG_NR_DRAM_BANKS);
 }
+#endif
 #endif
 
 static void announce_and_cleanup(void)
@@ -258,12 +267,11 @@ static int create_fdt(bootm_headers_t *images)
 		return ret;
 
 	fdt_chosen(*of_flat_tree, 1);
+#if !defined(NO_FIX_MEMORY_NODE)
 	fixup_memory_node(*of_flat_tree);
+#endif
 	fdt_fixup_ethernet(*of_flat_tree);
 	fdt_initrd(*of_flat_tree, *initrd_start, *initrd_end, 1);
-#ifdef CONFIG_OF_BOARD_SETUP
-	ft_board_setup(*of_flat_tree, gd->bd);
-#endif
 
 #ifdef CONFIG_OF_BOARD_SETUP
 	/* Call the board-specific fixup routine */

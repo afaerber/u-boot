@@ -22,7 +22,8 @@
 #
 # Top-level generic files
 #
-
+/include/u-boot.lst
+/TAGS
 /MLO
 /System.map
 /u-boot

@@ -38,6 +38,10 @@ struct spi_flash {
 	u32		page_size;
 	/* Erase (sector) size */
 	u32		sector_size;
+	/* Length of an address in bytes */
+	u32		address_len;
+	/* dummy cycles need by read */
+	int		dummy_read;
 
 	int		(*read)(struct spi_flash *flash, u32 offset,
 				size_t len, void *buf);
@@ -50,6 +54,12 @@ struct spi_flash {
 struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 		unsigned int max_hz, unsigned int spi_mode);
 void spi_flash_free(struct spi_flash *flash);
+#ifdef CONFIG_FLASH_CMD_FOR_SF
+int spi_read_lock_status(struct spi_flash *flash, u32 offset, u8 *lock);
+int spi_write_lock_status(struct spi_flash *flash, u32 offset, u8 lock);
+#endif
+int spi_set_4byte_mode(struct spi_flash *flash, int en);
+
 
 static inline int spi_flash_read(struct spi_flash *flash, u32 offset,
 		size_t len, void *buf)

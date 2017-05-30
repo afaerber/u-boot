@@ -21,9 +21,9 @@
 # MA 02111-1307 USA
 #
 
-VERSION = 2013
-PATCHLEVEL = 01
-SUBLEVEL = -rc1
+VERSION = 2016
+PATCHLEVEL = 02
+SUBLEVEL = 2
 EXTRAVERSION =
 ifneq "$(SUBLEVEL)" ""
 U_BOOT_VERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
@@ -270,7 +270,8 @@ LIBS-y += fs/libfs.o \
 	fs/reiserfs/libreiserfs.o \
 	fs/ubifs/libubifs.o \
 	fs/yaffs2/libyaffs2.o \
-	fs/zfs/libzfs.o
+	fs/zfs/libzfs.o \
+	fs/romfs/libromfs.o
 LIBS-y += net/libnet.o
 LIBS-y += disk/libdisk.o
 LIBS-y += drivers/bios_emulator/libatibiosemu.o
