@@ -172,7 +172,7 @@
 /* boot path */
 #define CONFIG_SYS_FLASH_BASE 0x48000000 /* XCS4 BootROM(32MB) */
 #define PHYS_FLASH_SIZE_1 0x01000000 /* 16MB in memory map */
-#define CONFIG_BOOTDELAY 0
+#define CONFIG_BOOTDELAY 5
 
 //#define CONFIG_SKIP_FLASH_PROBE 1
 #define CONFIG_SYS_MAX_FLASH_BANKS 1
