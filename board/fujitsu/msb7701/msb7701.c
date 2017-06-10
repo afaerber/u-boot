@@ -154,6 +154,8 @@ void ft_board_setup(void *blob, bd_t *bd)
 	int nodeoffset;
 	int video_out_capability = mhu_check_video_out_capability();
 
+	return;
+
 	nodeoffset = fdt_path_offset(blob, "/pcie1_x2len@0x33E00600");
 	status_str = (char *)fdt_getprop(blob, nodeoffset, "status", NULL);
 	if (status_str == NULL || !strcmp(status_str, "auto")) {
