@@ -378,11 +378,11 @@ static int jz_mmc_ofdata_to_platdata(struct udevice *dev)
 {
 	struct jz_mmc_priv *priv = dev_get_priv(dev);
 	const void *fdt = gd->fdt_blob;
-	int node = dev->of_offset;
+	int node = dev_of_offset(dev);
 	struct mmc_config *cfg;
 	int val;
 
-	priv->regs = map_physmem(dev_get_addr(dev), 0x100, MAP_NOCACHE);
+	priv->regs = map_physmem(devfdt_get_addr(dev), 0x100, MAP_NOCACHE);
 	cfg = &priv->cfg;
 
 	cfg->host_caps = MMC_MODE_HS_52MHz | MMC_MODE_HS;
